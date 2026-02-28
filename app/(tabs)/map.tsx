@@ -1,15 +1,22 @@
 import * as Location from 'expo-location';
+import { collection, getDocs } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
+import { db } from '../../firebaseConfig';
 
-const BATHROOMS = [
-  { id: 1, name: "Whole Foods Market", cleanliness: 4.7, free: true, accessible: true, babyChanging: true, genderNeutral: false, coordinate: { latitude: 33.7748, longitude: -84.3642 } },
-  { id: 2, name: "Starbucks - Peachtree Rd", cleanliness: 3.9, free: true, accessible: true, babyChanging: false, genderNeutral: true, coordinate: { latitude: 33.7765, longitude: -84.3598 } },
-  { id: 3, name: "Chamblee City Park", cleanliness: 2.8, free: true, accessible: true, babyChanging: false, genderNeutral: false, coordinate: { latitude: 33.7712, longitude: -84.3678 } },
-  { id: 4, name: "Nordstrom - Perimeter Mall", cleanliness: 4.9, free: true, accessible: true, babyChanging: true, genderNeutral: false, coordinate: { latitude: 33.7801, longitude: -84.3556 } },
-  { id: 5, name: "McDonald's - Buford Hwy", cleanliness: 2.1, free: true, accessible: true, babyChanging: false, genderNeutral: false, coordinate: { latitude: 33.7698, longitude: -84.3721 } },
-];
+type Bathroom = {
+  id: string;
+  name: string;
+  cleanliness: number;
+  free: boolean;
+  accessible: boolean;
+  babyChanging: boolean;
+  genderNeutral: boolean;
+  latitude: number;
+  longitude: number;
+  lastCleaned: string;
+};
 
 function getColor(score: number) {
   if (score >= 4.5) return '#16a34a';
@@ -26,7 +33,9 @@ function getLabel(score: number) {
 export default function MapScreen() {
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [bathrooms, setBathrooms] = useState<Bathroom[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -40,6 +49,24 @@ export default function MapScreen() {
     })();
   }, []);
 
+  useEffect(() => {
+    async function fetchBathrooms() {
+      try {
+        const snapshot = await getDocs(collection(db, 'bathrooms'));
+        const data = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Bathroom[];
+        setBathrooms(data);
+      } catch (error) {
+        console.error('Error fetching bathrooms:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchBathrooms();
+  }, []);
+
   const initialRegion = {
     latitude: location?.coords.latitude ?? 33.7748,
     longitude: location?.coords.longitude ?? -84.3642,
@@ -47,11 +74,19 @@ export default function MapScreen() {
     longitudeDelta: 0.05,
   };
 
-  const selectedBathroom = BATHROOMS.find(b => b.id === selected);
+  const selectedBathroom = bathrooms.find(b => b.id === selected);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0ea5e9" />
+        <Text style={styles.loadingText}>Loading map...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.logo}>🚽 GottaGo</Text>
         <Text style={styles.subtitle}>
@@ -59,7 +94,6 @@ export default function MapScreen() {
         </Text>
       </View>
 
-      {/* Map */}
       <MapView
         style={styles.map}
         initialRegion={initialRegion}
@@ -67,10 +101,10 @@ export default function MapScreen() {
         showsMyLocationButton={true}
         provider="google"
       >
-        {BATHROOMS.map(b => (
+        {bathrooms.map(b => (
           <Marker
             key={b.id}
-            coordinate={b.coordinate}
+            coordinate={{ latitude: b.latitude, longitude: b.longitude }}
             onPress={() => setSelected(b.id)}
           >
             <View style={[styles.pin, { borderColor: getColor(b.cleanliness) }]}>
@@ -82,7 +116,6 @@ export default function MapScreen() {
         ))}
       </MapView>
 
-      {/* Bottom detail card */}
       {selectedBathroom && (
         <View style={styles.card}>
           <View style={styles.cardTop}>
@@ -122,6 +155,8 @@ export default function MapScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' },
+  loadingText: { marginTop: 12, fontSize: 14, color: '#64748b', fontWeight: '600' },
   header: { backgroundColor: '#fff', padding: 20, paddingTop: 60, borderBottomWidth: 1, borderBottomColor: '#e2e8f0' },
   logo: { fontSize: 26, fontWeight: '800', color: '#0f172a' },
   subtitle: { fontSize: 13, color: '#94a3b8', marginTop: 2 },

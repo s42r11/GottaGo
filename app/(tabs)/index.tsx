@@ -1,13 +1,20 @@
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { collection, getDocs } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { db } from '../../firebaseConfig';
 
-const BATHROOMS = [
-  { id: 1, name: "Whole Foods Market", distance: "0.1 mi", cleanliness: 4.7, reviews: 42, accessible: true, genderNeutral: false, free: true, babyChanging: true, lastCleaned: "12 min ago" },
-  { id: 2, name: "Starbucks - Peachtree Rd", distance: "0.3 mi", cleanliness: 3.9, reviews: 87, accessible: true, genderNeutral: true, free: true, babyChanging: false, lastCleaned: "1 hr ago" },
-  { id: 3, name: "Chamblee City Park", distance: "0.5 mi", cleanliness: 2.8, reviews: 19, accessible: true, genderNeutral: false, free: true, babyChanging: false, lastCleaned: "4 hrs ago" },
-  { id: 4, name: "Nordstrom - Perimeter Mall", distance: "0.8 mi", cleanliness: 4.9, reviews: 134, accessible: true, genderNeutral: false, free: true, babyChanging: true, lastCleaned: "8 min ago" },
-  { id: 5, name: "McDonald's - Buford Hwy", distance: "1.1 mi", cleanliness: 2.1, reviews: 61, accessible: true, genderNeutral: false, free: true, babyChanging: false, lastCleaned: "Unknown" },
-];
+type Bathroom = {
+  id: string;
+  name: string;
+  distance: string;
+  cleanliness: number;
+  reviews: number;
+  accessible: boolean;
+  genderNeutral: boolean;
+  free: boolean;
+  babyChanging: boolean;
+  lastCleaned: string;
+};
 
 function getColor(score: number) {
   if (score >= 4.5) return '#16a34a';
@@ -22,19 +29,52 @@ function getLabel(score: number) {
 }
 
 export default function HomeScreen() {
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [bathrooms, setBathrooms] = useState<Bathroom[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchBathrooms() {
+      try {
+        const snapshot = await getDocs(collection(db, 'bathrooms'));
+        const data = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Bathroom[];
+        setBathrooms(data);
+      } catch (error) {
+        console.error('Error fetching bathrooms:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchBathrooms();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0ea5e9" />
+        <Text style={styles.loadingText}>Finding restrooms near you...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.logo}>🚽 GottaGo</Text>
-        <Text style={styles.subtitle}>Restrooms near you</Text>
+        <Text style={styles.subtitle}>Restrooms near you · {bathrooms.length} found</Text>
       </View>
 
-      {/* List */}
       <ScrollView style={styles.list} contentContainerStyle={{ padding: 16, gap: 12 }}>
-        {BATHROOMS.map(b => (
+        {bathrooms.length === 0 && (
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>🚫 No restrooms found yet.</Text>
+            <Text style={styles.emptySubtext}>Be the first to add one!</Text>
+          </View>
+        )}
+        {bathrooms.map(b => (
           <TouchableOpacity
             key={b.id}
             style={[styles.card, selected === b.id && styles.cardSelected]}
@@ -51,12 +91,10 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            {/* Cleanliness bar */}
             <View style={styles.barBg}>
               <View style={[styles.barFill, { width: `${(b.cleanliness / 5) * 100}%`, backgroundColor: getColor(b.cleanliness) }]} />
             </View>
 
-            {/* Amenities */}
             <View style={styles.badges}>
               {b.accessible && <Text style={styles.badge}>♿ Accessible</Text>}
               {b.genderNeutral && <Text style={styles.badge}>⚧ Neutral</Text>}
@@ -64,7 +102,6 @@ export default function HomeScreen() {
               {b.babyChanging && <Text style={styles.badge}>👶 Baby</Text>}
             </View>
 
-            {/* Expanded detail */}
             {selected === b.id && (
               <View style={styles.detail}>
                 <TouchableOpacity style={styles.btn}>
@@ -84,10 +121,15 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' },
+  loadingText: { marginTop: 12, fontSize: 14, color: '#64748b', fontWeight: '600' },
   header: { backgroundColor: '#fff', padding: 20, paddingTop: 60, borderBottomWidth: 1, borderBottomColor: '#e2e8f0' },
   logo: { fontSize: 26, fontWeight: '800', color: '#0f172a' },
   subtitle: { fontSize: 13, color: '#94a3b8', marginTop: 2 },
   list: { flex: 1 },
+  empty: { alignItems: 'center', padding: 40 },
+  emptyText: { fontSize: 16, fontWeight: '700', color: '#64748b' },
+  emptySubtext: { fontSize: 13, color: '#94a3b8', marginTop: 4 },
   card: { backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 2, borderColor: '#f1f5f9' },
   cardSelected: { borderColor: '#0ea5e9', backgroundColor: '#f0f9ff' },
   cardTop: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 },
