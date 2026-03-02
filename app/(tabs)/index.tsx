@@ -1,6 +1,6 @@
 import { collection, getDocs } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { db } from '../../firebaseConfig';
 
 type Bathroom = {
@@ -107,7 +107,12 @@ export default function HomeScreen() {
                 <TouchableOpacity style={styles.btn}>
                   <Text style={styles.btnText}>✍️ Leave a Review</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.btnOutline}>
+                <TouchableOpacity 
+                  style={styles.btnOutline}
+                  onPress={() => {
+                    const url = `https://www.google.com/maps/dir/?api=1&destination=${b.latitude},${b.longitude}`;
+                    Linking.openURL(url);
+                  }}>
                   <Text style={styles.btnOutlineText}>🗺 Get Directions</Text>
                 </TouchableOpacity>
               </View>

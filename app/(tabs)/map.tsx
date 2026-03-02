@@ -1,7 +1,7 @@
 import * as Location from 'expo-location';
 import { collection, getDocs } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { db } from '../../firebaseConfig';
 
@@ -143,8 +143,16 @@ export default function MapScreen() {
             <TouchableOpacity style={styles.btn}>
               <Text style={styles.btnText}>✍️ Leave a Review</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.btnOutline} onPress={() => setSelected(null)}>
-              <Text style={styles.btnOutlineText}>✕ Close</Text>
+            <TouchableOpacity 
+              style={styles.btnOutline} 
+              onPress={() => {
+                const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedBathroom.latitude},${selectedBathroom.longitude}`;
+                Linking.openURL(url);
+              }}>
+              <Text style={styles.btnOutlineText}>🗺 Directions</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.btnClose} onPress={() => setSelected(null)}>
+              <Text style={styles.btnCloseText}>✕ Close</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -176,4 +184,6 @@ const styles = StyleSheet.create({
   btnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   btnOutline: { flex: 1, borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 2, borderColor: '#e2e8f0' },
   btnOutlineText: { color: '#64748b', fontWeight: '700', fontSize: 13 },
+  btnClose: { flex: 1, borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 2, borderColor: '#e2e8f0' },
+  btnCloseText: { color: '#64748b', fontWeight: '700', fontSize: 13 },
 });
