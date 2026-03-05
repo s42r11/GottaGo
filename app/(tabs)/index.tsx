@@ -1,7 +1,9 @@
+import { router } from 'expo-router';
+import { signOut } from 'firebase/auth';
 import { collection, getDocs } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { db } from '../../firebaseConfig';
+import { auth, db } from '../../firebaseConfig';
 
 type Bathroom = {
   id: string;
@@ -63,8 +65,18 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.logo}>🚽 GottaGo</Text>
-        <Text style={styles.subtitle}>Restrooms near you · {bathrooms.length} found</Text>
+        <View>
+          <Text style={styles.logo}>🚽 GottaGo</Text>
+          <Text style={styles.subtitle}>Restrooms near you · {bathrooms.length} found</Text>
+        </View>
+        <TouchableOpacity onPress={async () => {
+          console.log('Signing out...');
+          await signOut(auth);
+          console.log('Signed out successfully');
+          router.replace('/login');
+        }} style={styles.signOutBtn}>
+          <Text style={styles.signOutText}>Sign Out</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.list} contentContainerStyle={{ padding: 16, gap: 12 }}>
@@ -128,7 +140,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' },
   loadingText: { marginTop: 12, fontSize: 14, color: '#64748b', fontWeight: '600' },
-  header: { backgroundColor: '#fff', padding: 20, paddingTop: 60, borderBottomWidth: 1, borderBottomColor: '#e2e8f0' },
+  header: { backgroundColor: '#fff', padding: 20, paddingTop: 60, borderBottomWidth: 1, borderBottomColor: '#e2e8f0', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   logo: { fontSize: 26, fontWeight: '800', color: '#0f172a' },
   subtitle: { fontSize: 13, color: '#94a3b8', marginTop: 2 },
   list: { flex: 1 },
@@ -152,4 +164,6 @@ const styles = StyleSheet.create({
   btnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   btnOutline: { flex: 1, borderRadius: 10, padding: 11, alignItems: 'center', borderWidth: 2, borderColor: '#bae6fd', backgroundColor: '#f0f9ff' },
   btnOutlineText: { color: '#0ea5e9', fontWeight: '700', fontSize: 13 },
+  signOutBtn: { backgroundColor: '#f1f5f9', borderRadius: 8, padding: 8 },
+  signOutText: { fontSize: 12, fontWeight: '700', color: '#64748b' },
 });

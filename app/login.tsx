@@ -22,6 +22,7 @@ export default function LoginScreen() {
       }
       router.replace('/(tabs)');
     } catch (e: any) {
+      console.log('Auth error:', e.code, e.message);
       setError(e.message.replace('Firebase: ', ''));
     } finally {
       setLoading(false);
