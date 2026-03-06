@@ -1,9 +1,11 @@
 import * as Location from 'expo-location';
+import { router, useFocusEffect } from 'expo-router';
 import { collection, getDocs } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import { db } from '../../firebaseConfig';
+import { auth, db } from '../../firebaseConfig';
+
 
 type Bathroom = {
   id: string;
@@ -49,23 +51,25 @@ export default function MapScreen() {
     })();
   }, []);
 
-  useEffect(() => {
-    async function fetchBathrooms() {
-      try {
-        const snapshot = await getDocs(collection(db, 'bathrooms'));
-        const data = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Bathroom[];
-        setBathrooms(data);
-      } catch (error) {
-        console.error('Error fetching bathrooms:', error);
-      } finally {
-        setLoading(false);
+  useFocusEffect(
+    React.useCallback(() => {
+      async function fetchBathrooms() {
+        try {
+          const snapshot = await getDocs(collection(db, 'bathrooms'));
+          const data = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })) as Bathroom[];
+          setBathrooms(data);
+        } catch (error) {
+          console.error('Error fetching bathrooms:', error);
+        } finally {
+          setLoading(false);
+        }
       }
-    }
-    fetchBathrooms();
-  }, []);
+      fetchBathrooms();
+    }, [])
+  );
 
   const initialRegion = {
     latitude: location?.coords.latitude ?? 33.7748,
@@ -140,7 +144,15 @@ export default function MapScreen() {
           </View>
 
           <View style={styles.buttons}>
-            <TouchableOpacity style={styles.btn}>
+            <TouchableOpacity
+              style={styles.btn}
+              onPress={() => {
+                if (!auth.currentUser) {
+                  router.push('/login');
+                } else {
+                  router.push({ pathname: '/review', params: { bathroomId: selectedBathroom.id, bathroomName: selectedBathroom.name } });
+                }
+              }}>
               <Text style={styles.btnText}>✍️ Leave a Review</Text>
             </TouchableOpacity>
             <TouchableOpacity 

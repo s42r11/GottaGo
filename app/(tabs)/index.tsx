@@ -1,7 +1,7 @@
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import { collection, getDocs } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
 
@@ -34,24 +34,28 @@ export default function HomeScreen() {
   const [selected, setSelected] = useState<string | null>(null);
   const [bathrooms, setBathrooms] = useState<Bathroom[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    async function fetchBathrooms() {
-      try {
-        const snapshot = await getDocs(collection(db, 'bathrooms'));
-        const data = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Bathroom[];
-        setBathrooms(data);
-      } catch (error) {
-        console.error('Error fetching bathrooms:', error);
-      } finally {
-        setLoading(false);
+  useFocusEffect(
+    React.useCallback(() => {
+      async function fetchBathrooms() {
+        try {
+          const snapshot = await getDocs(collection(db, 'bathrooms'));
+          const data = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })) as Bathroom[];
+          setBathrooms(data);
+        } catch (error) {
+          console.error('Error fetching bathrooms:', error);
+        } finally {
+          setLoading(false);
+        }
       }
-    }
-    fetchBathrooms();
-  }, []);
+      fetchBathrooms();
+    }, [])
+  );
+
 
   if (loading) {
     return (
@@ -116,7 +120,15 @@ export default function HomeScreen() {
 
             {selected === b.id && (
               <View style={styles.detail}>
-                <TouchableOpacity style={styles.btn}>
+                <TouchableOpacity 
+                  style={styles.btn}
+                  onPress={() => {
+                    if (!auth.currentUser) {
+                      router.push('/login');
+                    } else {
+                      router.push({ pathname: '/review', params: { bathroomId: b.id, bathroomName: b.name } });
+                    }
+                  }}>
                   <Text style={styles.btnText}>✍️ Leave a Review</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
