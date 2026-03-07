@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { auth, db } from '../../firebaseConfig';
-
+import { fetchAndSeedNearbyBathrooms } from '../../utils/overpass';
 
 type Bathroom = {
   id: string;
@@ -48,6 +48,12 @@ export default function MapScreen() {
       }
       let loc = await Location.getCurrentPositionAsync({});
       setLocation(loc);
+      
+      // Silently seed nearby bathrooms from OSM
+      await fetchAndSeedNearbyBathrooms(
+        loc.coords.latitude,
+        loc.coords.longitude
+      );
     })();
   }, []);
 
