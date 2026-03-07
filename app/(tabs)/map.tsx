@@ -126,6 +126,11 @@ export default function MapScreen() {
         ))}
       </MapView>
 
+      {/* OSM Attribution */}
+      <View style={styles.attribution}>
+        <Text style={styles.attributionText}>© OpenStreetMap Contributors</Text>
+      </View>
+
       {selectedBathroom && (
         <View style={styles.card}>
           <View style={styles.cardTop}>
@@ -204,4 +209,6 @@ const styles = StyleSheet.create({
   btnOutlineText: { color: '#64748b', fontWeight: '700', fontSize: 13 },
   btnClose: { flex: 1, borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 2, borderColor: '#e2e8f0' },
   btnCloseText: { color: '#64748b', fontWeight: '700', fontSize: 13 },
+  attribution: { position: 'absolute', bottom: 8, left: 8, backgroundColor: 'rgba(255,255,255,0.8)', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
+attributionText: { fontSize: 10, color: '#374151' },
 });
