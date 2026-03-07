@@ -73,12 +73,23 @@ export default function HomeScreen() {
           <Text style={styles.logo}>🚽 GottaGo</Text>
           <Text style={styles.subtitle}>Restrooms near you · {bathrooms.length} found</Text>
         </View>
-        <TouchableOpacity onPress={async () => {
-          console.log('Signing out...');
-          await signOut(auth);
-          console.log('Signed out successfully');
-          router.replace('/login');
-        }} style={styles.signOutBtn}>
+          <TouchableOpacity 
+            onPress={() => {
+            if (!auth.currentUser) {
+              router.push('/login');
+            } else {
+              router.push('/add-bathroom');
+            }
+            }}
+            style={styles.addBtn}>
+            <Text style={styles.addBtnText}>+ Add</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={async () => {
+            console.log('Signing out...');
+            await signOut(auth);
+            console.log('Signed out successfully');
+            router.replace('/login');
+          }} style={styles.signOutBtn}>
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
       </View>
