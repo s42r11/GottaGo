@@ -117,9 +117,9 @@ export default function MapScreen() {
             coordinate={{ latitude: b.latitude, longitude: b.longitude }}
             onPress={() => setSelected(b.id)}
           >
-            <View style={[styles.pin, { borderColor: getColor(b.cleanliness) }]}>
-              <Text style={[styles.pinScore, { color: getColor(b.cleanliness) }]}>
-                {b.cleanliness.toFixed(1)}
+            <View style={[styles.pin, { borderColor: b.cleanliness === 0 ? '#94a3b8' : getColor(b.cleanliness) }]}>
+              <Text style={[styles.pinScore, { color: b.cleanliness === 0 ? '#94a3b8' : getColor(b.cleanliness) }]}>
+                {b.cleanliness === 0 ? 'N/R' : b.cleanliness.toFixed(1)}
               </Text>
             </View>
           </Marker>
@@ -136,13 +136,13 @@ export default function MapScreen() {
           <View style={styles.cardTop}>
             <View style={{ flex: 1 }}>
               <Text style={styles.cardName}>{selectedBathroom.name}</Text>
-              <Text style={[styles.cardLabel, { color: getColor(selectedBathroom.cleanliness) }]}>
-                {getLabel(selectedBathroom.cleanliness)}
+              <Text style={[styles.cardLabel, { color: selectedBathroom.cleanliness === 0 ? '#94a3b8' : getColor(selectedBathroom.cleanliness) }]}>
+                {selectedBathroom.cleanliness === 0 ? 'Not yet rated — be the first!' : getLabel(selectedBathroom.cleanliness)}
               </Text>
             </View>
             <View style={styles.scoreBox}>
-              <Text style={[styles.score, { color: getColor(selectedBathroom.cleanliness) }]}>
-                {selectedBathroom.cleanliness.toFixed(1)}
+              <Text style={[styles.score, { color: selectedBathroom.cleanliness === 0 ? '#94a3b8' : getColor(selectedBathroom.cleanliness) }]}>
+                {selectedBathroom.cleanliness === 0 ? 'Unrated' : selectedBathroom.cleanliness.toFixed(1)}
               </Text>
             </View>
           </View>
@@ -192,8 +192,8 @@ const styles = StyleSheet.create({
   logo: { fontSize: 26, fontWeight: '800', color: '#0f172a' },
   subtitle: { fontSize: 13, color: '#94a3b8', marginTop: 2 },
   map: { flex: 1 },
-  pin: { backgroundColor: '#fff', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 2.5, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 4, elevation: 4 },
-  pinScore: { fontSize: 13, fontWeight: '900' },
+  pin: { backgroundColor: '#fff', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 2.5, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 4, elevation: 4, maxWidth: 120 },
+  pinScore: { fontSize: 10, fontWeight: '900' },
   card: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', borderRadius: 20, padding: 20, paddingBottom: 36, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 12, elevation: 8 },
   cardTop: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 },
   cardName: { fontSize: 17, fontWeight: '800', color: '#0f172a' },
@@ -210,5 +210,5 @@ const styles = StyleSheet.create({
   btnClose: { flex: 1, borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 2, borderColor: '#e2e8f0' },
   btnCloseText: { color: '#64748b', fontWeight: '700', fontSize: 13 },
   attribution: { position: 'absolute', bottom: 8, left: 8, backgroundColor: 'rgba(255,255,255,0.8)', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
-attributionText: { fontSize: 10, color: '#374151' },
+  attributionText: { fontSize: 10, color: '#374151' },
 });

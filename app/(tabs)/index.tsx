@@ -113,13 +113,13 @@ export default function HomeScreen() {
                 <Text style={styles.cardSub}>📍 {b.distance}  ·  🧹 {b.lastCleaned}</Text>
               </View>
               <View style={styles.scoreBox}>
-                <Text style={[styles.score, { color: getColor(b.cleanliness) }]}>{b.cleanliness.toFixed(1)}</Text>
-                <Text style={[styles.scoreLabel, { color: getColor(b.cleanliness) }]}>{getLabel(b.cleanliness)}</Text>
+                <Text style={[styles.score, { color: b.cleanliness === 0 ? '#94a3b8' : getColor(b.cleanliness) }]}>{b.cleanliness === 0 ? 'Unrated' : b.cleanliness.toFixed(1)}</Text>
+                <Text style={[styles.scoreLabel, { color: b.cleanliness === 0 ? '#94a3b8' : getColor(b.cleanliness) }]}>{b.cleanliness === 0 ? 'Not yet rated — be the first!' : getLabel(b.cleanliness)}</Text>
               </View>
             </View>
 
             <View style={styles.barBg}>
-              <View style={[styles.barFill, { width: `${(b.cleanliness / 5) * 100}%`, backgroundColor: getColor(b.cleanliness) }]} />
+              <View style={[styles.barFill, { width: b.cleanliness === 0 ? '0%' : `${(b.cleanliness / 5) * 100}%`, backgroundColor: b.cleanliness === 0 ? '#e5e7eb' : getColor(b.cleanliness) }]} />
             </View>
 
             <View style={styles.badges}>
