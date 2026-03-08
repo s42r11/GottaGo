@@ -10,12 +10,13 @@ type Bathroom = {
   name: string;
   distance: string;
   cleanliness: number;
-  reviews: number;
+  reviewCount: number;
   accessible: boolean;
   genderNeutral: boolean;
   free: boolean;
   babyChanging: boolean;
   lastCleaned: string;
+  verified: boolean;
 };
 
 function getColor(score: number) {
@@ -123,6 +124,7 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.badges}>
+              {b.verified && <Text style={styles.verifiedBadge}>✓ Community Verified</Text>}
               {b.accessible && <Text style={styles.badge}>♿ Accessible</Text>}
               {b.genderNeutral && <Text style={styles.badge}>⚧ Neutral</Text>}
               {b.free && <Text style={styles.badge}>🆓 Free</Text>}
@@ -189,4 +191,5 @@ const styles = StyleSheet.create({
   btnOutlineText: { color: '#0ea5e9', fontWeight: '700', fontSize: 13 },
   signOutBtn: { backgroundColor: '#f1f5f9', borderRadius: 8, padding: 8 },
   signOutText: { fontSize: 12, fontWeight: '700', color: '#64748b' },
+  verifiedBadge: { fontSize: 11, fontWeight: '700', backgroundColor: '#dcfce7', color: '#16a34a', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
 });

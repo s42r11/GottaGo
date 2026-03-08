@@ -11,6 +11,7 @@ type Bathroom = {
   id: string;
   name: string;
   cleanliness: number;
+  reviewCount: number;
   free: boolean;
   accessible: boolean;
   babyChanging: boolean;
@@ -18,6 +19,7 @@ type Bathroom = {
   latitude: number;
   longitude: number;
   lastCleaned: string;
+  verified: boolean;
 };
 
 function getColor(score: number) {
@@ -148,6 +150,7 @@ export default function MapScreen() {
           </View>
 
           <View style={styles.badges}>
+            {selectedBathroom.verified && <Text style={styles.verifiedBadge}>✓ Community Verified</Text>}
             {selectedBathroom.accessible && <Text style={styles.badge}>♿ Accessible</Text>}
             {selectedBathroom.genderNeutral && <Text style={styles.badge}>⚧ Neutral</Text>}
             {selectedBathroom.free && <Text style={styles.badge}>🆓 Free</Text>}
@@ -211,4 +214,5 @@ const styles = StyleSheet.create({
   btnCloseText: { color: '#64748b', fontWeight: '700', fontSize: 13 },
   attribution: { position: 'absolute', bottom: 8, left: 8, backgroundColor: 'rgba(255,255,255,0.8)', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
   attributionText: { fontSize: 10, color: '#374151' },
+  verifiedBadge: { fontSize: 11, fontWeight: '700', backgroundColor: '#dcfce7', color: '#16a34a', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
 });
