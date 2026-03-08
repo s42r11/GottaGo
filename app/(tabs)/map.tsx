@@ -137,7 +137,7 @@ export default function MapScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.cardName}>{selectedBathroom.name}</Text>
               <Text style={[styles.cardLabel, { color: selectedBathroom.cleanliness === 0 ? '#94a3b8' : getColor(selectedBathroom.cleanliness) }]}>
-                {selectedBathroom.cleanliness === 0 ? 'Not yet rated — be the first!' : getLabel(selectedBathroom.cleanliness)}
+                {selectedBathroom.cleanliness === 0 ? 'Not yet rated — be the first!' : `${getLabel(selectedBathroom.cleanliness)} · ${selectedBathroom.reviewCount || 0} reviews`}
               </Text>
             </View>
             <View style={styles.scoreBox}>

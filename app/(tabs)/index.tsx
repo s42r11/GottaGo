@@ -114,7 +114,7 @@ export default function HomeScreen() {
               </View>
               <View style={styles.scoreBox}>
                 <Text style={[styles.score, { color: b.cleanliness === 0 ? '#94a3b8' : getColor(b.cleanliness) }]}>{b.cleanliness === 0 ? 'Unrated' : b.cleanliness.toFixed(1)}</Text>
-                <Text style={[styles.scoreLabel, { color: b.cleanliness === 0 ? '#94a3b8' : getColor(b.cleanliness) }]}>{b.cleanliness === 0 ? 'Not yet rated — be the first!' : getLabel(b.cleanliness)}</Text>
+                <Text style={[styles.scoreLabel, { color: b.cleanliness === 0 ? '#94a3b8' : getColor(b.cleanliness) }]}>{b.cleanliness === 0 ? 'Not yet rated — be the first!' : `${getLabel(b.cleanliness)} · ${b.reviewCount || 0} reviews`}</Text>
               </View>
             </View>
 
