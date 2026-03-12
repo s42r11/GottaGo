@@ -95,6 +95,27 @@ export default function MapScreen() {
     );
   }
 
+  if (!loading && bathrooms.length === 0) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={{ fontSize: 56, marginBottom: 16 }}>🚽</Text>
+        <Text style={{ fontSize: 18, fontWeight: '700', color: '#f8fafc', marginBottom: 8 }}>No restrooms found nearby</Text>
+        <Text style={{ fontSize: 14, color: '#64748b', marginBottom: 24, textAlign: 'center', paddingHorizontal: 40 }}>Try moving to a different area or add one yourself!</Text>
+        <TouchableOpacity
+          style={{ backgroundColor: '#0d9488', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 14 }}
+          onPress={() => {
+            if (!auth.currentUser) {
+              router.push('/login');
+            } else {
+              router.push('/add-bathroom');
+            }
+          }}>
+          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>+ Add a Bathroom</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+  
   return (
     <View style={styles.container}>
       <View style={styles.header}>
