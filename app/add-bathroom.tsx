@@ -2,7 +2,18 @@ import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { addDoc, collection } from 'firebase/firestore';
 import React, { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { auth, db } from '../firebaseConfig';
 
 function AmenityToggle({ label, value, onValueChange }: { label: string, value: boolean, onValueChange: (v: boolean) => void }) {
@@ -12,7 +23,7 @@ function AmenityToggle({ label, value, onValueChange }: { label: string, value: 
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ false: '#e2e8f0', true: '#0ea5e9' }}
+        trackColor={{ false: '#334155', true: '#0d9488' }}
         thumbColor='#fff'
       />
     </View>
@@ -49,13 +60,10 @@ export default function AddBathroomScreen() {
       let longitude = 0;
 
       const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status === 'granted') {
+      if (status === 'granted') {
         const loc = await Location.getCurrentPositionAsync({});
         latitude = loc.coords.latitude;
         longitude = loc.coords.longitude;
-        console.log('GPS captured:', latitude, longitude);
-      } else {
-        console.log('GPS permission denied, status:', status);
       }
 
       await addDoc(collection(db, 'bathrooms'), {
@@ -104,35 +112,33 @@ export default function AddBathroomScreen() {
         <Text style={styles.title}>Add a Bathroom</Text>
         <Text style={styles.subtitle}>Help the community find great restrooms</Text>
 
-        <Text style={styles.label}>Bathroom Name *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. Whole Foods Market"
-          placeholderTextColor="#94a3b8"
-          value={name}
-          onChangeText={setName}
-        />
+        <View style={styles.card}>
+          <Text style={styles.sectionLabel}>DETAILS</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Bathroom name e.g. Whole Foods Market"
+            placeholderTextColor="#475569"
+            value={name}
+            onChangeText={setName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Address e.g. 214 Ponce De Leon Ave NE"
+            placeholderTextColor="#475569"
+            value={address}
+            onChangeText={setAddress}
+          />
+          <TextInput
+            style={[styles.input, { marginBottom: 0 }]}
+            placeholder="Location in building e.g. 2nd floor, near deli"
+            placeholderTextColor="#475569"
+            value={floor}
+            onChangeText={setFloor}
+          />
+        </View>
 
-        <Text style={styles.label}>Address *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. 214 Ponce De Leon Ave NE"
-          placeholderTextColor="#94a3b8"
-          value={address}
-          onChangeText={setAddress}
-        />
-
-        <Text style={styles.label}>Location in Building (optional)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. 2nd floor, near deli"
-          placeholderTextColor="#94a3b8"
-          value={floor}
-          onChangeText={setFloor}
-        />
-
-        <Text style={styles.sectionTitle}>Amenities</Text>
-        <View style={styles.toggleContainer}>
+        <View style={styles.card}>
+          <Text style={styles.sectionLabel}>AMENITIES</Text>
           <AmenityToggle label="♿ Accessible" value={accessible} onValueChange={setAccessible} />
           <AmenityToggle label="⚧ Gender Neutral" value={genderNeutral} onValueChange={setGenderNeutral} />
           <AmenityToggle label="🆓 Free to Use" value={free} onValueChange={setFree} />
@@ -141,10 +147,14 @@ export default function AddBathroomScreen() {
         </View>
 
         <View style={styles.infoBox}>
-          <Text style={styles.infoText}>📍 We'll use your current GPS location for this bathroom. Make sure you're at or near the bathroom when submitting!</Text>
+          <Text style={styles.infoText}>📍 Your current GPS location will be used for this bathroom. Make sure you're nearby when submitting!</Text>
         </View>
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && (
+          <View style={styles.errorBox}>
+            <Text style={styles.errorText}>⚠️ {error}</Text>
+          </View>
+        )}
 
         <TouchableOpacity
           style={styles.btn}
@@ -162,22 +172,22 @@ export default function AddBathroomScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
+  container: { flex: 1, backgroundColor: '#0f172a' },
   inner: { padding: 24 },
-  header: { marginBottom: 16 },
+  header: { marginBottom: 16, marginTop: 40 },
   backBtn: { alignSelf: 'flex-start' },
-  backText: { fontSize: 15, color: '#0ea5e9', fontWeight: '600' },
-  title: { fontSize: 28, fontWeight: '900', color: '#0f172a', marginBottom: 4 },
+  backText: { fontSize: 15, color: '#0d9488', fontWeight: '600' },
+  title: { fontSize: 28, fontWeight: '900', color: '#f8fafc', marginBottom: 4 },
   subtitle: { fontSize: 15, color: '#64748b', marginBottom: 24 },
-  label: { fontSize: 13, fontWeight: '700', color: '#0f172a', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
-  input: { backgroundColor: '#fff', borderWidth: 1.5, borderColor: '#e2e8f0', borderRadius: 12, padding: 14, fontSize: 15, color: '#0f172a', marginBottom: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: '800', color: '#0f172a', marginTop: 8, marginBottom: 12 },
-  toggleContainer: { backgroundColor: '#fff', borderRadius: 12, borderWidth: 1.5, borderColor: '#e2e8f0', marginBottom: 16 },
-  toggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
-  toggleLabel: { fontSize: 15, color: '#0f172a', fontWeight: '500' },
-  infoBox: { backgroundColor: '#e0f2fe', borderRadius: 12, padding: 14, marginBottom: 16 },
-  infoText: { fontSize: 13, color: '#0369a1', fontWeight: '500', lineHeight: 20 },
-  error: { color: '#dc2626', fontSize: 13, marginBottom: 12 },
-  btn: { backgroundColor: '#0f172a', borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 40 },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  card: { backgroundColor: '#1e293b', borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#334155' },
+  sectionLabel: { fontSize: 11, fontWeight: '800', color: '#475569', marginBottom: 16, letterSpacing: 1 },
+  input: { backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 12, padding: 14, fontSize: 15, color: '#f8fafc', marginBottom: 12 },
+  toggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#334155' },
+  toggleLabel: { fontSize: 15, color: '#f8fafc', fontWeight: '500' },
+  infoBox: { backgroundColor: '#0f2744', borderRadius: 14, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: '#1e40af' },
+  infoText: { fontSize: 13, color: '#7dd3fc', fontWeight: '500', lineHeight: 20 },
+  errorBox: { backgroundColor: '#450a0a', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#7f1d1d' },
+  errorText: { color: '#fca5a5', fontSize: 13, fontWeight: '600' },
+  btn: { backgroundColor: '#0d9488', borderRadius: 14, padding: 16, alignItems: 'center', marginBottom: 40, shadowColor: '#0d9488', shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 },
+  btnText: { color: '#fff', fontWeight: '800', fontSize: 16 },
 });
