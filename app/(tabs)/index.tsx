@@ -33,10 +33,41 @@ function getLabel(score: number) {
   return 'Rough';
 }
 
+const FILTER_OPTIONS = [
+  { key: 'accessible', label: '♿ Accessible' },
+  { key: 'genderNeutral', label: '⚧ Neutral' },
+  { key: 'free', label: '🆓 Free' },
+  { key: 'babyChanging', label: '👶 Baby Changing' },
+  { key: 'verified', label: '✓ Verified' },
+];
+
+const PREVIEW_FILTERS = FILTER_OPTIONS.slice(0, 3);
+const EXTRA_FILTERS = FILTER_OPTIONS.slice(3);
+
 export default function HomeScreen() {
   const [selected, setSelected] = useState<string | null>(null);
   const [bathrooms, setBathrooms] = useState<Bathroom[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState<string[]>([]);
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
+
+  function toggleFilter(filter: string) {
+    setFilters(prev =>
+      prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]
+    );
+  }
+
+  const filtered = bathrooms.filter(b => {
+    if (filters.length === 0) return true;
+    return filters.every(f => {
+      if (f === 'accessible') return b.accessible;
+      if (f === 'genderNeutral') return b.genderNeutral;
+      if (f === 'free') return b.free;
+      if (f === 'babyChanging') return b.babyChanging;
+      if (f === 'verified') return b.verified;
+      return true;
+    });
+  });
 
   useFocusEffect(
     React.useCallback(() => {
@@ -67,13 +98,15 @@ export default function HomeScreen() {
     );
   }
 
+  const extraActiveCount = EXTRA_FILTERS.filter(f => filters.includes(f.key)).length;
+
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.logo}>🚽 GottaGo</Text>
-          <Text style={styles.subtitle}>Restrooms near you · {bathrooms.length} found</Text>
+          <Text style={styles.subtitle}>Restrooms near you · {filtered.length} found</Text>
         </View>
         <View style={styles.headerButtons}>
           <TouchableOpacity
@@ -96,27 +129,65 @@ export default function HomeScreen() {
         </View>
       </View>
 
+      {/* Filter bar — 3 preview pills + expand button */}
+      <View style={styles.filterBar}>
+        {PREVIEW_FILTERS.map(f => (
+          <TouchableOpacity
+            key={f.key}
+            style={[styles.filterPill, filters.includes(f.key) && styles.filterPillActive]}
+            onPress={() => toggleFilter(f.key)}>
+            <Text style={[styles.filterPillText, filters.includes(f.key) && styles.filterPillTextActive]}>
+              {f.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+        <TouchableOpacity
+          style={[styles.filterMoreBtn, (filtersExpanded || extraActiveCount > 0) && styles.filterMoreBtnActive]}
+          onPress={() => setFiltersExpanded(!filtersExpanded)}>
+          <Text style={[styles.filterMoreText, (filtersExpanded || extraActiveCount > 0) && styles.filterMoreTextActive]}>
+            {filtersExpanded ? '✕ Less' : `⚙ More${extraActiveCount > 0 ? ` (${extraActiveCount})` : ''}`}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Expanded extra filters */}
+      {filtersExpanded && (
+        <View style={styles.filterPanel}>
+          <View style={styles.filterPillsGrid}>
+            {EXTRA_FILTERS.map(f => (
+              <TouchableOpacity
+                key={f.key}
+                style={[styles.filterPill, filters.includes(f.key) && styles.filterPillActive]}
+                onPress={() => toggleFilter(f.key)}>
+                <Text style={[styles.filterPillText, filters.includes(f.key) && styles.filterPillTextActive]}>
+                  {f.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          {filters.length > 0 && (
+            <TouchableOpacity onPress={() => setFilters([])} style={styles.clearBtn}>
+              <Text style={styles.clearBtnText}>Clear all filters</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
       {/* List */}
       <ScrollView style={styles.list} contentContainerStyle={{ padding: 16, gap: 12 }}>
-        {bathrooms.length === 0 && (
+        {filtered.length === 0 && (
           <View style={styles.empty}>
             <Text style={styles.emptyIcon}>🚽</Text>
-            <Text style={styles.emptyText}>No restrooms found nearby</Text>
-            <Text style={styles.emptySubtext}>Be the first to add one!</Text>
+            <Text style={styles.emptyText}>No restrooms match your filters</Text>
+            <Text style={styles.emptySubtext}>Try removing some filters or add one yourself!</Text>
             <TouchableOpacity
               style={styles.emptyBtn}
-              onPress={() => {
-                if (!auth.currentUser) {
-                  router.push('/login');
-                } else {
-                  router.push('/add-bathroom');
-                }
-              }}>
-              <Text style={styles.emptyBtnText}>+ Add a Bathroom</Text>
+              onPress={() => setFilters([])}>
+              <Text style={styles.emptyBtnText}>Clear Filters</Text>
             </TouchableOpacity>
           </View>
         )}
-        {bathrooms.map(b => (
+        {filtered.map(b => (
           <TouchableOpacity
             key={b.id}
             style={[styles.card, selected === b.id && styles.cardSelected]}
@@ -197,11 +268,24 @@ const styles = StyleSheet.create({
   addBtnText: { fontSize: 13, fontWeight: '700', color: '#fff' },
   signOutBtn: { backgroundColor: '#334155', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
   signOutText: { fontSize: 13, fontWeight: '700', color: '#94a3b8' },
+  filterBar: { backgroundColor: '#1e293b', borderBottomWidth: 1, borderBottomColor: '#334155', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 8, justifyContent: 'space-between' },
+  filterPill: { flex: 1, borderRadius: 99, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1.5, borderColor: '#334155', backgroundColor: '#0f172a', alignItems: 'center' },
+  filterPillActive: { backgroundColor: '#0d9488', borderColor: '#0d9488' },
+  filterPillText: { fontSize: 11, fontWeight: '700', color: '#64748b' },
+  filterPillTextActive: { color: '#fff' },
+  filterMoreBtn: { flex: 1, borderRadius: 99, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1.5, borderColor: '#334155', backgroundColor: '#0f172a', alignItems: 'center' },
+  filterMoreBtnActive: { backgroundColor: '#0d9488', borderColor: '#0d9488' },
+  filterMoreText: { fontSize: 11, fontWeight: '700', color: '#64748b' },
+  filterMoreTextActive: { color: '#fff' },
+  filterPanel: { backgroundColor: '#1e293b', borderBottomWidth: 1, borderBottomColor: '#334155', padding: 16 },
+  filterPillsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  clearBtn: { alignSelf: 'flex-start', marginTop: 4 },
+  clearBtnText: { fontSize: 12, color: '#f43f5e', fontWeight: '700' },
   list: { flex: 1 },
   empty: { alignItems: 'center', paddingTop: 80 },
   emptyIcon: { fontSize: 56, marginBottom: 16 },
   emptyText: { fontSize: 18, fontWeight: '700', color: '#f8fafc', marginBottom: 8 },
-  emptySubtext: { fontSize: 14, color: '#64748b', marginBottom: 24 },
+  emptySubtext: { fontSize: 14, color: '#64748b', marginBottom: 24, textAlign: 'center' },
   emptyBtn: { backgroundColor: '#0d9488', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 14 },
   emptyBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   card: { backgroundColor: '#1e293b', borderRadius: 16, padding: 16, borderWidth: 1.5, borderColor: '#334155' },
