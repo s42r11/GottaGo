@@ -1,8 +1,8 @@
 import { router, useFocusEffect } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import { collection, getDocs } from 'firebase/firestore';
-import React, { useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
 
 type Bathroom = {
@@ -43,6 +43,36 @@ const FILTER_OPTIONS = [
 
 const PREVIEW_FILTERS = FILTER_OPTIONS.slice(0, 3);
 const EXTRA_FILTERS = FILTER_OPTIONS.slice(3);
+
+function SkeletonCard() {
+  const pulse = useRef(new Animated.Value(0.4)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0.4, duration: 800, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+
+  return (
+    <Animated.View style={[styles.skeletonCard, { opacity: pulse }]}>
+      <View style={styles.skeletonRow}>
+        <View style={{ flex: 1 }}>
+          <View style={styles.skeletonTitle} />
+          <View style={styles.skeletonSubtitle} />
+        </View>
+        <View style={styles.skeletonScore} />
+      </View>
+      <View style={styles.skeletonBar} />
+      <View style={styles.skeletonBadgesRow}>
+        <View style={styles.skeletonBadge} />
+        <View style={styles.skeletonBadge} />
+      </View>
+    </Animated.View>
+  );
+}
 
 export default function HomeScreen() {
   const [selected, setSelected] = useState<string | null>(null);
@@ -89,15 +119,6 @@ export default function HomeScreen() {
     }, [])
   );
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0d9488" />
-        <Text style={styles.loadingText}>Finding restrooms near you...</Text>
-      </View>
-    );
-  }
-
   const extraActiveCount = EXTRA_FILTERS.filter(f => filters.includes(f.key)).length;
 
   return (
@@ -106,7 +127,9 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.logo}>🚽 GottaGo</Text>
-          <Text style={styles.subtitle}>Restrooms near you · {filtered.length} found</Text>
+          <Text style={styles.subtitle}>
+            {loading ? 'Loading...' : `Restrooms near you · ${filtered.length} found`}
+          </Text>
         </View>
         <View style={styles.headerButtons}>
           <TouchableOpacity
@@ -129,7 +152,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Filter bar — 3 preview pills + expand button */}
+      {/* Filter bar */}
       <View style={styles.filterBar}>
         {PREVIEW_FILTERS.map(f => (
           <TouchableOpacity
@@ -173,84 +196,92 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* List */}
+      {/* Skeleton or List */}
       <ScrollView style={styles.list} contentContainerStyle={{ padding: 16, gap: 12 }}>
-        {filtered.length === 0 && (
-          <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>🚽</Text>
-            <Text style={styles.emptyText}>No restrooms match your filters</Text>
-            <Text style={styles.emptySubtext}>Try removing some filters or add one yourself!</Text>
-            <TouchableOpacity
-              style={styles.emptyBtn}
-              onPress={() => setFilters([])}>
-              <Text style={styles.emptyBtnText}>Clear Filters</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-        {filtered.map(b => (
-          <TouchableOpacity
-            key={b.id}
-            style={[styles.card, selected === b.id && styles.cardSelected]}
-            onPress={() => setSelected(selected === b.id ? null : b.id)}
-          >
-            <View style={styles.cardTop}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cardName}>{b.name}</Text>
-                <Text style={styles.cardSub}>📍 {b.distance}  ·  🧹 {b.lastCleaned}</Text>
-              </View>
-              <View style={styles.scoreBox}>
-                <Text style={[styles.score, { color: b.cleanliness === 0 ? '#475569' : getColor(b.cleanliness) }]}>
-                  {b.cleanliness === 0 ? 'New' : b.cleanliness.toFixed(1)}
-                </Text>
-                <Text style={[styles.scoreLabel, { color: b.cleanliness === 0 ? '#475569' : getColor(b.cleanliness) }]}>
-                  {b.cleanliness === 0 ? 'Not yet rated' : `${getLabel(b.cleanliness)} · ${b.reviewCount || 0} reviews`}
-                </Text>
-              </View>
-            </View>
-
-            {/* Cleanliness bar */}
-            <View style={styles.barBg}>
-              <View style={[styles.barFill, {
-                width: b.cleanliness === 0 ? '0%' : `${(b.cleanliness / 5) * 100}%`,
-                backgroundColor: b.cleanliness === 0 ? '#1e293b' : getColor(b.cleanliness)
-              }]} />
-            </View>
-
-            {/* Amenities */}
-            <View style={styles.badges}>
-              {b.verified && <Text style={styles.verifiedBadge}>✓ Verified</Text>}
-              {b.accessible && <Text style={styles.badge}>♿ Accessible</Text>}
-              {b.genderNeutral && <Text style={styles.badge}>⚧ Neutral</Text>}
-              {b.free && <Text style={styles.badge}>🆓 Free</Text>}
-              {b.babyChanging && <Text style={styles.badge}>👶 Baby</Text>}
-            </View>
-
-            {/* Expanded detail */}
-            {selected === b.id && (
-              <View style={styles.detail}>
+        {loading ? (
+          <>
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </>
+        ) : (
+          <>
+            {filtered.length === 0 && (
+              <View style={styles.empty}>
+                <Text style={styles.emptyIcon}>🚽</Text>
+                <Text style={styles.emptyText}>No restrooms match your filters</Text>
+                <Text style={styles.emptySubtext}>Try removing some filters or add one yourself!</Text>
                 <TouchableOpacity
-                  style={styles.btn}
-                  onPress={() => {
-                    if (!auth.currentUser) {
-                      router.push('/login');
-                    } else {
-                      router.push({ pathname: '/review', params: { bathroomId: b.id, bathroomName: b.name } });
-                    }
-                  }}>
-                  <Text style={styles.btnText}>✍️ Leave a Review</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.btnOutline}
-                  onPress={() => {
-                    const url = `https://www.google.com/maps/dir/?api=1&destination=${b.latitude},${b.longitude}`;
-                    Linking.openURL(url);
-                  }}>
-                  <Text style={styles.btnOutlineText}>🗺 Directions</Text>
+                  style={styles.emptyBtn}
+                  onPress={() => setFilters([])}>
+                  <Text style={styles.emptyBtnText}>Clear Filters</Text>
                 </TouchableOpacity>
               </View>
             )}
-          </TouchableOpacity>
-        ))}
+            {filtered.map(b => (
+              <TouchableOpacity
+                key={b.id}
+                style={[styles.card, selected === b.id && styles.cardSelected]}
+                onPress={() => setSelected(selected === b.id ? null : b.id)}
+              >
+                <View style={styles.cardTop}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardName}>{b.name}</Text>
+                    <Text style={styles.cardSub}>📍 {b.distance}  ·  🧹 {b.lastCleaned}</Text>
+                  </View>
+                  <View style={styles.scoreBox}>
+                    <Text style={[styles.score, { color: b.cleanliness === 0 ? '#475569' : getColor(b.cleanliness) }]}>
+                      {b.cleanliness === 0 ? 'New' : b.cleanliness.toFixed(1)}
+                    </Text>
+                    <Text style={[styles.scoreLabel, { color: b.cleanliness === 0 ? '#475569' : getColor(b.cleanliness) }]}>
+                      {b.cleanliness === 0 ? 'Not yet rated' : `${getLabel(b.cleanliness)} · ${b.reviewCount || 0} reviews`}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.barBg}>
+                  <View style={[styles.barFill, {
+                    width: b.cleanliness === 0 ? '0%' : `${(b.cleanliness / 5) * 100}%`,
+                    backgroundColor: b.cleanliness === 0 ? '#1e293b' : getColor(b.cleanliness)
+                  }]} />
+                </View>
+
+                <View style={styles.badges}>
+                  {b.verified && <Text style={styles.verifiedBadge}>✓ Verified</Text>}
+                  {b.accessible && <Text style={styles.badge}>♿ Accessible</Text>}
+                  {b.genderNeutral && <Text style={styles.badge}>⚧ Neutral</Text>}
+                  {b.free && <Text style={styles.badge}>🆓 Free</Text>}
+                  {b.babyChanging && <Text style={styles.badge}>👶 Baby</Text>}
+                </View>
+
+                {selected === b.id && (
+                  <View style={styles.detail}>
+                    <TouchableOpacity
+                      style={styles.btn}
+                      onPress={() => {
+                        if (!auth.currentUser) {
+                          router.push('/login');
+                        } else {
+                          router.push({ pathname: '/review', params: { bathroomId: b.id, bathroomName: b.name } });
+                        }
+                      }}>
+                      <Text style={styles.btnText}>✍️ Leave a Review</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.btnOutline}
+                      onPress={() => {
+                        const url = `https://www.google.com/maps/dir/?api=1&destination=${b.latitude},${b.longitude}`;
+                        Linking.openURL(url);
+                      }}>
+                      <Text style={styles.btnOutlineText}>🗺 Directions</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -269,11 +300,11 @@ const styles = StyleSheet.create({
   signOutBtn: { backgroundColor: '#334155', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
   signOutText: { fontSize: 13, fontWeight: '700', color: '#94a3b8' },
   filterBar: { backgroundColor: '#1e293b', borderBottomWidth: 1, borderBottomColor: '#334155', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 8, justifyContent: 'space-between' },
-  filterPill: { flex: 1, borderRadius: 99, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1.5, borderColor: '#334155', backgroundColor: '#0f172a', alignItems: 'center' },
+  filterPill: { flex: 1, borderRadius: 99, paddingHorizontal: 8, paddingVertical: 7, borderWidth: 1.5, borderColor: '#334155', backgroundColor: '#0f172a', alignItems: 'center' },
   filterPillActive: { backgroundColor: '#0d9488', borderColor: '#0d9488' },
   filterPillText: { fontSize: 11, fontWeight: '700', color: '#64748b' },
   filterPillTextActive: { color: '#fff' },
-  filterMoreBtn: { flex: 1, borderRadius: 99, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1.5, borderColor: '#334155', backgroundColor: '#0f172a', alignItems: 'center' },
+  filterMoreBtn: { flex: 1, borderRadius: 99, paddingHorizontal: 8, paddingVertical: 7, borderWidth: 1.5, borderColor: '#334155', backgroundColor: '#0f172a', alignItems: 'center' },
   filterMoreBtnActive: { backgroundColor: '#0d9488', borderColor: '#0d9488' },
   filterMoreText: { fontSize: 11, fontWeight: '700', color: '#64748b' },
   filterMoreTextActive: { color: '#fff' },
@@ -282,6 +313,14 @@ const styles = StyleSheet.create({
   clearBtn: { alignSelf: 'flex-start', marginTop: 4 },
   clearBtnText: { fontSize: 12, color: '#f43f5e', fontWeight: '700' },
   list: { flex: 1 },
+  skeletonCard: { backgroundColor: '#1e293b', borderRadius: 16, padding: 16, borderWidth: 1.5, borderColor: '#334155' },
+  skeletonRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 },
+  skeletonTitle: { height: 16, backgroundColor: '#334155', borderRadius: 8, marginBottom: 8, width: '60%' },
+  skeletonSubtitle: { height: 12, backgroundColor: '#334155', borderRadius: 8, width: '40%' },
+  skeletonScore: { width: 44, height: 44, backgroundColor: '#334155', borderRadius: 8, marginLeft: 12 },
+  skeletonBar: { height: 6, backgroundColor: '#334155', borderRadius: 99, marginBottom: 10 },
+  skeletonBadgesRow: { flexDirection: 'row', gap: 6 },
+  skeletonBadge: { height: 22, width: 80, backgroundColor: '#334155', borderRadius: 99 },
   empty: { alignItems: 'center', paddingTop: 80 },
   emptyIcon: { fontSize: 56, marginBottom: 16 },
   emptyText: { fontSize: 18, fontWeight: '700', color: '#f8fafc', marginBottom: 8 },
