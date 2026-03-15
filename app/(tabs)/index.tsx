@@ -1,14 +1,17 @@
+import * as Location from 'expo-location';
 import { router, useFocusEffect } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import { collection, getDocs } from 'firebase/firestore';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
+import { formatDistance, getDistanceMiles } from '../../utils/distance';
 
 type Bathroom = {
   id: string;
   name: string;
   distance: string;
+  distanceMiles: number;
   cleanliness: number;
   reviewCount: number;
   accessible: boolean;
@@ -80,6 +83,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<string[]>([]);
   const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
 
   function toggleFilter(filter: string) {
     setFilters(prev =>
@@ -87,7 +91,46 @@ export default function HomeScreen() {
     );
   }
 
-  const filtered = bathrooms.filter(b => {
+  // Get user location with fast lastKnown fallback
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const lastKnown = await Location.getLastKnownPositionAsync({});
+        if (lastKnown && !cancelled) {
+          setUserLocation({
+            latitude: lastKnown.coords.latitude,
+            longitude: lastKnown.coords.longitude,
+          });
+        }
+        const current = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        if (!cancelled) {
+          setUserLocation({
+            latitude: current.coords.latitude,
+            longitude: current.coords.longitude,
+          });
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Recalculate distances when location or bathrooms change
+  const bathroomsWithDistance = bathrooms.map(b => {
+    const distanceMiles = userLocation
+      ? getDistanceMiles(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude)
+      : 999;
+    return {
+      ...b,
+      distanceMiles,
+      distance: userLocation ? formatDistance(distanceMiles) : 'Locating...',
+    };
+  }).sort((a, b) => a.distanceMiles - b.distanceMiles);
+
+  const filtered = bathroomsWithDistance.filter(b => {
     if (filters.length === 0) return true;
     return filters.every(f => {
       if (f === 'accessible') return b.accessible;
@@ -106,6 +149,7 @@ export default function HomeScreen() {
           const snapshot = await getDocs(collection(db, 'bathrooms'));
           const data = snapshot.docs.map(doc => ({
             id: doc.id,
+            distanceMiles: 999,
             ...doc.data()
           })) as Bathroom[];
           setBathrooms(data);

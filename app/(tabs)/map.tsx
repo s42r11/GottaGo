@@ -42,19 +42,23 @@ export default function MapScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setErrorMsg('Permission to access location was denied');
+        if (!cancelled) setErrorMsg('Permission to access location was denied');
         return;
       }
       let loc = await Location.getCurrentPositionAsync({});
-      setLocation(loc);
-      await fetchAndSeedNearbyBathrooms(
-        loc.coords.latitude,
-        loc.coords.longitude
-      );
+      if (!cancelled) {
+        setLocation(loc);
+        await fetchAndSeedNearbyBathrooms(
+          loc.coords.latitude,
+          loc.coords.longitude
+        );
+      }
     })();
+    return () => { cancelled = true; };
   }, []);
 
   useFocusEffect(
@@ -115,7 +119,7 @@ export default function MapScreen() {
       </View>
     );
   }
-  
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
