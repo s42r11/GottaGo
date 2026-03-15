@@ -49,12 +49,20 @@ export default function MapScreen() {
         if (!cancelled) setErrorMsg('Permission to access location was denied');
         return;
       }
-      let loc = await Location.getCurrentPositionAsync({});
+      // Show map instantly using last known position
+      const lastKnown = await Location.getLastKnownPositionAsync({});
+      if (lastKnown && !cancelled) {
+        setLocation(lastKnown);
+      }
+      // Then refine with current position in background
+      const current = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
       if (!cancelled) {
-        setLocation(loc);
+        setLocation(current);
         await fetchAndSeedNearbyBathrooms(
-          loc.coords.latitude,
-          loc.coords.longitude
+          current.coords.latitude,
+          current.coords.longitude
         );
       }
     })();
@@ -81,20 +89,20 @@ export default function MapScreen() {
     }, [])
   );
 
-  const initialRegion = {
-    latitude: location?.coords.latitude ?? 33.7748,
-    longitude: location?.coords.longitude ?? -84.3642,
+  const initialRegion = location ? {
+    latitude: location.coords.latitude,
+    longitude: location.coords.longitude,
     latitudeDelta: 0.05,
     longitudeDelta: 0.05,
-  };
+  } : null;
 
   const selectedBathroom = bathrooms.find(b => b.id === selected);
 
-  if (loading) {
+  if (loading || !initialRegion) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#0d9488" />
-        <Text style={styles.loadingText}>Loading map...</Text>
+        <Text style={styles.loadingText}>Finding your location...</Text>
       </View>
     );
   }
