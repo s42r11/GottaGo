@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { router, useFocusEffect } from 'expo-router';
 import { collection, getDocs } from 'firebase/firestore';
@@ -49,12 +50,10 @@ export default function MapScreen() {
         if (!cancelled) setErrorMsg('Permission to access location was denied');
         return;
       }
-      // Show map instantly using last known position
       const lastKnown = await Location.getLastKnownPositionAsync({});
       if (lastKnown && !cancelled) {
         setLocation(lastKnown);
       }
-      // Then refine with current position in background
       const current = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
@@ -116,6 +115,7 @@ export default function MapScreen() {
         <TouchableOpacity
           style={{ backgroundColor: '#0d9488', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 14 }}
           onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             if (!auth.currentUser) {
               router.push('/login');
             } else {
@@ -148,7 +148,10 @@ export default function MapScreen() {
           <Marker
             key={b.id}
             coordinate={{ latitude: b.latitude, longitude: b.longitude }}
-            onPress={() => setSelected(b.id)}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setSelected(b.id);
+            }}
           >
             <View style={[styles.pin, {
               borderColor: b.cleanliness === 0 ? '#475569' : getColor(b.cleanliness),
@@ -203,6 +206,7 @@ export default function MapScreen() {
             <TouchableOpacity
               style={styles.btn}
               onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 if (!auth.currentUser) {
                   router.push('/login');
                 } else {
@@ -214,12 +218,16 @@ export default function MapScreen() {
             <TouchableOpacity
               style={styles.btnOutline}
               onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedBathroom.latitude},${selectedBathroom.longitude}`;
                 Linking.openURL(url);
               }}>
               <Text style={styles.btnOutlineText}>🗺 Directions</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.btnClose} onPress={() => setSelected(null)}>
+            <TouchableOpacity style={styles.btnClose} onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setSelected(null);
+            }}>
               <Text style={styles.btnCloseText}>✕</Text>
             </TouchableOpacity>
           </View>

@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { addDoc, collection, doc, getDoc, updateDoc } from 'firebase/firestore';
 import React, { useState } from 'react';
@@ -25,6 +26,7 @@ export default function ReviewScreen() {
 
   async function handleSubmit() {
     if (rating === 0) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setError('Please select a star rating');
       return;
     }
@@ -55,8 +57,10 @@ export default function ReviewScreen() {
           lastCleaned: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' today',
         });
       }
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     } catch (e: any) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       console.log('Review error:', e.code, e.message);
       setError('Something went wrong. Please try again.');
     } finally {
@@ -71,7 +75,10 @@ export default function ReviewScreen() {
       <ScrollView contentContainerStyle={styles.inner}>
 
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.back();
+          }} style={styles.backBtn}>
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
         </View>
@@ -86,7 +93,10 @@ export default function ReviewScreen() {
           <Text style={styles.starsLabel}>How clean was it?</Text>
           <View style={styles.stars}>
             {[1, 2, 3, 4, 5].map(i => (
-              <TouchableOpacity key={i} onPress={() => setRating(i)}>
+              <TouchableOpacity key={i} onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setRating(i);
+              }}>
                 <Text style={[styles.star, { color: i <= rating ? '#f59e0b' : '#334155' }]}>★</Text>
               </TouchableOpacity>
             ))}
@@ -119,7 +129,10 @@ export default function ReviewScreen() {
 
         <TouchableOpacity
           style={[styles.btn, rating === 0 && styles.btnDisabled]}
-          onPress={handleSubmit}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            handleSubmit();
+          }}
           disabled={loading || rating === 0}>
           {loading
             ? <ActivityIndicator color="#fff" />

@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import React, { useState } from 'react';
@@ -23,6 +24,7 @@ export default function LoginScreen() {
 
   async function handleAuth() {
     if (!email.trim() || !password.trim()) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setError('Please enter your email and password');
       return;
     }
@@ -34,8 +36,10 @@ export default function LoginScreen() {
       } else {
         await signInWithEmailAndPassword(auth, email.trim(), password.trim());
       }
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace('/(tabs)');
     } catch (e: any) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       if (e.code === 'auth/user-not-found') setError('No account found with that email');
       else if (e.code === 'auth/wrong-password') setError('Incorrect password');
       else if (e.code === 'auth/email-already-in-use') setError('An account with that email already exists');
@@ -103,7 +107,10 @@ export default function LoginScreen() {
 
           <TouchableOpacity
             style={styles.btn}
-            onPress={handleAuth}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              handleAuth();
+            }}
             disabled={loading}>
             {loading
               ? <ActivityIndicator color="#fff" />
@@ -113,7 +120,11 @@ export default function LoginScreen() {
 
           <TouchableOpacity
             style={styles.switchBtn}
-            onPress={() => { setIsSignUp(!isSignUp); setError(null); }}>
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setIsSignUp(!isSignUp);
+              setError(null);
+            }}>
             <Text style={styles.switchText}>
               {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
               <Text style={styles.switchHighlight}>{isSignUp ? 'Sign In' : 'Sign Up'}</Text>
@@ -128,7 +139,10 @@ export default function LoginScreen() {
 
           <TouchableOpacity
             style={styles.guestBtn}
-            onPress={() => router.replace('/(tabs)')}>
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.replace('/(tabs)');
+            }}>
             <Text style={styles.guestText}>👀 Browse without account</Text>
           </TouchableOpacity>
         </View>

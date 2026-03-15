@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { addDoc, collection } from 'firebase/firestore';
@@ -22,7 +23,10 @@ function AmenityToggle({ label, value, onValueChange }: { label: string, value: 
       <Text style={styles.toggleLabel}>{label}</Text>
       <Switch
         value={value}
-        onValueChange={onValueChange}
+        onValueChange={(v) => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onValueChange(v);
+        }}
         trackColor={{ false: '#334155', true: '#0d9488' }}
         thumbColor='#fff'
       />
@@ -44,10 +48,12 @@ export default function AddBathroomScreen() {
 
   async function handleSubmit() {
     if (!name.trim()) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setError('Please enter a name for this bathroom');
       return;
     }
     if (!address.trim()) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setError('Please enter an address');
       return;
     }
@@ -88,8 +94,10 @@ export default function AddBathroomScreen() {
         createdAt: new Date().toISOString(),
       });
 
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     } catch (e: any) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       console.log('Add bathroom error:', e.code, e.message);
       setError('Something went wrong. Please try again.');
     } finally {
@@ -104,7 +112,10 @@ export default function AddBathroomScreen() {
       <ScrollView contentContainerStyle={styles.inner}>
 
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.back();
+          }} style={styles.backBtn}>
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
         </View>
@@ -158,7 +169,10 @@ export default function AddBathroomScreen() {
 
         <TouchableOpacity
           style={styles.btn}
-          onPress={handleSubmit}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            handleSubmit();
+          }}
           disabled={loading}>
           {loading
             ? <ActivityIndicator color="#fff" />
