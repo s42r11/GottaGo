@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { router, useFocusEffect } from 'expo-router';
 import { signOut } from 'firebase/auth';
@@ -86,6 +87,7 @@ export default function HomeScreen() {
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
 
   function toggleFilter(filter: string) {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setFilters(prev =>
       prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]
     );
@@ -178,6 +180,7 @@ export default function HomeScreen() {
         <View style={styles.headerButtons}>
           <TouchableOpacity
             onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               if (!auth.currentUser) {
                 router.push('/login');
               } else {
@@ -188,6 +191,7 @@ export default function HomeScreen() {
             <Text style={styles.addBtnText}>+ Add</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={async () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             await signOut(auth);
             router.replace('/login');
           }} style={styles.signOutBtn}>
@@ -210,7 +214,10 @@ export default function HomeScreen() {
         ))}
         <TouchableOpacity
           style={[styles.filterMoreBtn, (filtersExpanded || extraActiveCount > 0) && styles.filterMoreBtnActive]}
-          onPress={() => setFiltersExpanded(!filtersExpanded)}>
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setFiltersExpanded(!filtersExpanded);
+          }}>
           <Text style={[styles.filterMoreText, (filtersExpanded || extraActiveCount > 0) && styles.filterMoreTextActive]}>
             {filtersExpanded ? '✕ Less' : `⚙ More${extraActiveCount > 0 ? ` (${extraActiveCount})` : ''}`}
           </Text>
@@ -233,7 +240,10 @@ export default function HomeScreen() {
             ))}
           </View>
           {filters.length > 0 && (
-            <TouchableOpacity onPress={() => setFilters([])} style={styles.clearBtn}>
+            <TouchableOpacity onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setFilters([]);
+            }} style={styles.clearBtn}>
               <Text style={styles.clearBtnText}>Clear all filters</Text>
             </TouchableOpacity>
           )}
@@ -258,7 +268,10 @@ export default function HomeScreen() {
                 <Text style={styles.emptySubtext}>Try removing some filters or add one yourself!</Text>
                 <TouchableOpacity
                   style={styles.emptyBtn}
-                  onPress={() => setFilters([])}>
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setFilters([]);
+                  }}>
                   <Text style={styles.emptyBtnText}>Clear Filters</Text>
                 </TouchableOpacity>
               </View>
@@ -267,7 +280,10 @@ export default function HomeScreen() {
               <TouchableOpacity
                 key={b.id}
                 style={[styles.card, selected === b.id && styles.cardSelected]}
-                onPress={() => setSelected(selected === b.id ? null : b.id)}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setSelected(selected === b.id ? null : b.id);
+                }}
               >
                 <View style={styles.cardTop}>
                   <View style={{ flex: 1 }}>
@@ -304,6 +320,7 @@ export default function HomeScreen() {
                     <TouchableOpacity
                       style={styles.btn}
                       onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                         if (!auth.currentUser) {
                           router.push('/login');
                         } else {
@@ -315,6 +332,7 @@ export default function HomeScreen() {
                     <TouchableOpacity
                       style={styles.btnOutline}
                       onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                         const url = `https://www.google.com/maps/dir/?api=1&destination=${b.latitude},${b.longitude}`;
                         Linking.openURL(url);
                       }}>
