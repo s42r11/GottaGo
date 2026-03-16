@@ -1,3 +1,4 @@
+import * as Location from 'expo-location';
 import { addDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
@@ -15,6 +16,25 @@ type OverpassBathroom = {
     building?: string;
   };
 };
+
+async function reverseGeocode(latitude: number, longitude: number): Promise<string> {
+  try {
+    const results = await Location.reverseGeocodeAsync({ latitude, longitude });
+    if (results && results.length > 0) {
+      const r = results[0];
+      const parts = [
+        r.streetNumber,
+        r.street,
+        r.city,
+        r.region,
+      ].filter(Boolean);
+      return parts.join(', ');
+    }
+  } catch (e) {
+    console.log('Reverse geocode failed:', e);
+  }
+  return '';
+}
 
 export async function fetchAndSeedNearbyBathrooms(latitude: number, longitude: number) {
   try {
@@ -66,9 +86,12 @@ export async function fetchAndSeedNearbyBathrooms(latitude: number, longitude: n
       const babyChanging = element.tags.changing_table === 'yes';
       const genderNeutral = element.tags.unisex === 'yes';
 
+      // Reverse geocode to get a real address
+      const address = await reverseGeocode(element.lat, element.lon);
+
       await addDoc(collection(db, 'bathrooms'), {
         name,
-        address: '',
+        address,
         floor: '',
         accessible,
         genderNeutral,
