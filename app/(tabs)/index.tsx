@@ -3,8 +3,8 @@ import * as Location from 'expo-location';
 import { router, useFocusEffect } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import { collection, getDocs } from 'firebase/firestore';
-import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Animated, Linking, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
 import { formatDistance, getDistanceMiles } from '../../utils/distance';
 
@@ -82,6 +82,7 @@ export default function HomeScreen() {
   const [selected, setSelected] = useState<string | null>(null);
   const [bathrooms, setBathrooms] = useState<Bathroom[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [filters, setFilters] = useState<string[]>([]);
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -91,6 +92,29 @@ export default function HomeScreen() {
     setFilters(prev =>
       prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]
     );
+  }
+
+  async function fetchBathrooms() {
+    try {
+      const snapshot = await getDocs(collection(db, 'bathrooms'));
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        distanceMiles: 999,
+        ...doc.data()
+      })) as Bathroom[];
+      setBathrooms(data);
+    } catch (error) {
+      console.error('Error fetching bathrooms:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }
+
+  async function onRefresh() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setRefreshing(true);
+    await fetchBathrooms();
   }
 
   // Get user location with fast lastKnown fallback
@@ -145,22 +169,7 @@ export default function HomeScreen() {
   });
 
   useFocusEffect(
-    React.useCallback(() => {
-      async function fetchBathrooms() {
-        try {
-          const snapshot = await getDocs(collection(db, 'bathrooms'));
-          const data = snapshot.docs.map(doc => ({
-            id: doc.id,
-            distanceMiles: 999,
-            ...doc.data()
-          })) as Bathroom[];
-          setBathrooms(data);
-        } catch (error) {
-          console.error('Error fetching bathrooms:', error);
-        } finally {
-          setLoading(false);
-        }
-      }
+    useCallback(() => {
       fetchBathrooms();
     }, [])
   );
@@ -251,7 +260,17 @@ export default function HomeScreen() {
       )}
 
       {/* Skeleton or List */}
-      <ScrollView style={styles.list} contentContainerStyle={{ padding: 16, gap: 12 }}>
+      <ScrollView
+        style={styles.list}
+        contentContainerStyle={{ padding: 16, gap: 12 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#0d9488"
+            colors={['#0d9488']}
+          />
+        }>
         {loading ? (
           <>
             <SkeletonCard />
