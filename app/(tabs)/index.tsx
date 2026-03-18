@@ -11,6 +11,7 @@ import { formatDistance, getDistanceMiles } from '../../utils/distance';
 type Bathroom = {
   id: string;
   name: string;
+  address: string;
   distance: string;
   distanceMiles: number;
   cleanliness: number;
@@ -38,15 +39,17 @@ function getLabel(score: number) {
 }
 
 const FILTER_OPTIONS = [
-  { key: 'accessible', label: '♿ Accessible' },
-  { key: 'genderNeutral', label: '⚧ Neutral' },
-  { key: 'free', label: '🆓 Free' },
-  { key: 'babyChanging', label: '👶 Baby Changing' },
-  { key: 'verified', label: '✓ Verified' },
+  { key: 'free', label: '🆓', fullLabel: '🆓 Free' },
+  { key: 'accessible', label: '♿', fullLabel: '♿ Accessible' },
+  { key: 'babyChanging', label: '👶', fullLabel: '👶 Baby Changing' },
+  { key: 'genderNeutral', label: '⚧', fullLabel: '⚧ Neutral' },
+  { key: 'verified', label: '✓', fullLabel: '✓ Verified' },
 ];
 
 const PREVIEW_FILTERS = FILTER_OPTIONS.slice(0, 3);
 const EXTRA_FILTERS = FILTER_OPTIONS.slice(3);
+
+type SortOption = 'nearest' | 'highest';
 
 function SkeletonCard() {
   const pulse = useRef(new Animated.Value(0.4)).current;
@@ -86,6 +89,7 @@ export default function HomeScreen() {
   const [filters, setFilters] = useState<string[]>([]);
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [sortBy, setSortBy] = useState<SortOption>('nearest');
 
   function toggleFilter(filter: string) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -117,7 +121,6 @@ export default function HomeScreen() {
     await fetchBathrooms();
   }
 
-  // Get user location with fast lastKnown fallback
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -144,7 +147,6 @@ export default function HomeScreen() {
     return () => { cancelled = true; };
   }, []);
 
-  // Recalculate distances when location or bathrooms change
   const bathroomsWithDistance = bathrooms.map(b => {
     const distanceMiles = userLocation
       ? getDistanceMiles(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude)
@@ -154,19 +156,25 @@ export default function HomeScreen() {
       distanceMiles,
       distance: userLocation ? formatDistance(distanceMiles) : 'Locating...',
     };
-  }).sort((a, b) => a.distanceMiles - b.distanceMiles);
-
-  const filtered = bathroomsWithDistance.filter(b => {
-    if (filters.length === 0) return true;
-    return filters.every(f => {
-      if (f === 'accessible') return b.accessible;
-      if (f === 'genderNeutral') return b.genderNeutral;
-      if (f === 'free') return b.free;
-      if (f === 'babyChanging') return b.babyChanging;
-      if (f === 'verified') return b.verified;
-      return true;
-    });
   });
+
+  const filtered = bathroomsWithDistance
+    .filter(b => {
+      if (filters.length === 0) return true;
+      return filters.every(f => {
+        if (f === 'accessible') return b.accessible;
+        if (f === 'genderNeutral') return b.genderNeutral;
+        if (f === 'free') return b.free;
+        if (f === 'babyChanging') return b.babyChanging;
+        if (f === 'verified') return b.verified;
+        return true;
+      });
+    })
+    .sort((a, b) => {
+      if (sortBy === 'nearest') return a.distanceMiles - b.distanceMiles;
+      if (sortBy === 'highest') return b.cleanliness - a.cleanliness;
+      return 0;
+    });
 
   useFocusEffect(
     useCallback(() => {
@@ -209,18 +217,44 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Filter bar */}
-      <View style={styles.filterBar}>
+      {/* Single control row — sort + filters */}
+      <View style={styles.controlRow}>
+        {/* Sort pills */}
+        <TouchableOpacity
+          style={[styles.sortPill, sortBy === 'nearest' && styles.sortPillActive]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setSortBy('nearest');
+          }}>
+          <Text style={[styles.sortPillText, sortBy === 'nearest' && styles.sortPillTextActive]}>
+            📍 Nearest
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.sortPill, sortBy === 'highest' && styles.sortPillActive]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setSortBy('highest');
+          }}>
+          <Text style={[styles.sortPillText, sortBy === 'highest' && styles.sortPillTextActive]}>
+            ⭐ Top Rated
+          </Text>
+        </TouchableOpacity>
+
+        {/* Divider */}
+        <View style={styles.divider} />
+
+        {/* Filter pills — icon only */}
         {PREVIEW_FILTERS.map(f => (
           <TouchableOpacity
             key={f.key}
             style={[styles.filterPill, filters.includes(f.key) && styles.filterPillActive]}
             onPress={() => toggleFilter(f.key)}>
-            <Text style={[styles.filterPillText, filters.includes(f.key) && styles.filterPillTextActive]}>
-              {f.label}
-            </Text>
+            <Text style={styles.filterPillIcon}>{f.label}</Text>
           </TouchableOpacity>
         ))}
+
+        {/* More button */}
         <TouchableOpacity
           style={[styles.filterMoreBtn, (filtersExpanded || extraActiveCount > 0) && styles.filterMoreBtnActive]}
           onPress={() => {
@@ -228,7 +262,7 @@ export default function HomeScreen() {
             setFiltersExpanded(!filtersExpanded);
           }}>
           <Text style={[styles.filterMoreText, (filtersExpanded || extraActiveCount > 0) && styles.filterMoreTextActive]}>
-            {filtersExpanded ? '✕ Less' : `⚙ More${extraActiveCount > 0 ? ` (${extraActiveCount})` : ''}`}
+            {filtersExpanded ? '✕' : `⚙${extraActiveCount > 0 ? ` ${extraActiveCount}` : ''}`}
           </Text>
         </TouchableOpacity>
       </View>
@@ -236,14 +270,15 @@ export default function HomeScreen() {
       {/* Expanded extra filters */}
       {filtersExpanded && (
         <View style={styles.filterPanel}>
+          <Text style={styles.filterPanelLabel}>FILTERS</Text>
           <View style={styles.filterPillsGrid}>
-            {EXTRA_FILTERS.map(f => (
+            {FILTER_OPTIONS.map(f => (
               <TouchableOpacity
                 key={f.key}
-                style={[styles.filterPill, filters.includes(f.key) && styles.filterPillActive]}
+                style={[styles.filterPillFull, filters.includes(f.key) && styles.filterPillActive]}
                 onPress={() => toggleFilter(f.key)}>
-                <Text style={[styles.filterPillText, filters.includes(f.key) && styles.filterPillTextActive]}>
-                  {f.label}
+                <Text style={[styles.filterPillFullText, filters.includes(f.key) && styles.filterPillTextActive]}>
+                  {f.fullLabel}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -380,17 +415,25 @@ const styles = StyleSheet.create({
   addBtnText: { fontSize: 13, fontWeight: '700', color: '#fff' },
   signOutBtn: { backgroundColor: '#334155', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
   signOutText: { fontSize: 13, fontWeight: '700', color: '#94a3b8' },
-  filterBar: { backgroundColor: '#1e293b', borderBottomWidth: 1, borderBottomColor: '#334155', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 8, justifyContent: 'space-between' },
-  filterPill: { flex: 1, borderRadius: 99, paddingHorizontal: 8, paddingVertical: 7, borderWidth: 1.5, borderColor: '#334155', backgroundColor: '#0f172a', alignItems: 'center' },
+  controlRow: { backgroundColor: '#1e293b', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#334155', gap: 6 },
+  sortPill: { borderRadius: 99, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1.5, borderColor: '#334155', backgroundColor: '#0f172a' },
+  sortPillActive: { backgroundColor: '#0d9488', borderColor: '#0d9488' },
+  sortPillText: { fontSize: 11, fontWeight: '700', color: '#64748b' },
+  sortPillTextActive: { color: '#fff' },
+  divider: { width: 1, height: 20, backgroundColor: '#334155', marginHorizontal: 2 },
+  filterPill: { borderRadius: 99, paddingHorizontal: 9, paddingVertical: 6, borderWidth: 1.5, borderColor: '#334155', backgroundColor: '#0f172a' },
   filterPillActive: { backgroundColor: '#0d9488', borderColor: '#0d9488' },
-  filterPillText: { fontSize: 11, fontWeight: '700', color: '#64748b' },
-  filterPillTextActive: { color: '#fff' },
-  filterMoreBtn: { flex: 1, borderRadius: 99, paddingHorizontal: 8, paddingVertical: 7, borderWidth: 1.5, borderColor: '#334155', backgroundColor: '#0f172a', alignItems: 'center' },
+  filterPillIcon: { fontSize: 13 },
+  filterMoreBtn: { borderRadius: 99, paddingHorizontal: 9, paddingVertical: 6, borderWidth: 1.5, borderColor: '#334155', backgroundColor: '#0f172a', marginLeft: 'auto' },
   filterMoreBtnActive: { backgroundColor: '#0d9488', borderColor: '#0d9488' },
   filterMoreText: { fontSize: 11, fontWeight: '700', color: '#64748b' },
   filterMoreTextActive: { color: '#fff' },
   filterPanel: { backgroundColor: '#1e293b', borderBottomWidth: 1, borderBottomColor: '#334155', padding: 16 },
+  filterPanelLabel: { fontSize: 11, fontWeight: '800', color: '#475569', marginBottom: 10, letterSpacing: 1 },
   filterPillsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  filterPillFull: { borderRadius: 99, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1.5, borderColor: '#334155', backgroundColor: '#0f172a' },
+  filterPillFullText: { fontSize: 12, fontWeight: '700', color: '#64748b' },
+  filterPillTextActive: { color: '#fff' },
   clearBtn: { alignSelf: 'flex-start', marginTop: 4 },
   clearBtnText: { fontSize: 12, color: '#f43f5e', fontWeight: '700' },
   list: { flex: 1 },
