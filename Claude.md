@@ -287,16 +287,91 @@ All work committed regularly with descriptive commit messages.
 - The app is tested exclusively on a Google Pixel via Expo Go
 - Windows development environment — use Windows-compatible commands
 - Git commands with parentheses in paths need quoting: `git checkout -- "app/(tabs)/map.tsx"`
-```
 
-Save this as `CLAUDE.md` in the root of your GottaGo project:
-```
-C:\Users\s42r1\GottaGo\CLAUDE.md
-```
+---
 
-Then commit it:
+## Why These Technologies Were Chosen
+
+### Expo Managed vs Bare
+Chosen because Steven is a first-time developer. Managed workflow handles native build complexity automatically. Bare workflow was never seriously considered — the simplicity of managed was essential for a beginner getting started fast.
+
+### Firebase vs Supabase
+Supabase was evaluated early on but Firebase was chosen for its simpler React Native integration and better Expo compatibility. A Supabase project was actually created during evaluation but never used — it was later archived. Firebase Auth + Firestore covered all needs without additional complexity.
+
+### React Native + Expo vs Other Frameworks
+Flutter and native Android were briefly considered. React Native + Expo was chosen because JavaScript/TypeScript is more widely documented, Claude can assist more effectively with it, and Expo Go allows instant testing on a physical device without a build step.
+
+### Google Maps vs Apple Maps vs OpenStreetMap Tiles
+Google Maps chosen for Android because it's the native expected experience. OSM is used only as a data source via Overpass API — not for map tile rendering. Apple Maps was never considered since target platform is Android only.
+
+### expo-location vs react-native-geolocation
+expo-location chosen because it's the Expo-recommended package and works without ejecting. Includes both foreground permissions and reverse geocoding in one package.
+
+---
+
+## Explicitly Rejected Decisions
+
+### Hardcoded fallback GPS coordinates
+Early map implementation used `33.7748, -84.3642` (Atlanta area) as a fallback while waiting for GPS. This was rejected because it caused the map to always open centered on a cluster of seeded test bathrooms rather than the user's actual location. Fixed by waiting for real GPS before rendering the map at all.
+
+### borderWidth on map pins
+Originally used `borderWidth: 2.5` on map marker Views. Android's Google Maps implementation clips the right border of custom markers, making pins look broken. Rejected in favor of a double-wrapped View approach where the outer View's background color creates the border effect visually.
+
+### localStorage / AsyncStorage for bathroom data
+Considered caching bathrooms locally to speed up load times. Rejected in favor of always fetching fresh from Firebase, supplemented by the `getLastKnownPositionAsync` pattern for GPS speed.
+
+### Supabase as backend
+Created a Supabase project early on but abandoned it in favor of Firebase before any real integration work began.
+
+### Dark mode toggle
+Was on the v3 feature list but deprioritized. The app is dark-mode first by design — the navy theme IS the dark mode. A light mode would require a complete redesign and was deemed not worth the effort for v1.
+
+### useState for auth redirect (vs useRef)
+Originally used `useState(false)` to track whether auth redirect had happened. Caused an infinite redirect loop. Fixed by switching to `useRef(false)` which doesn't trigger re-renders.
+
+### Overpass API bulk import
+Considered importing a large dataset of bathroom locations from OSM in bulk. Rejected in favor of on-demand seeding triggered by the user's GPS location, to avoid filling Firebase with irrelevant global data.
+
+---
+
+## "Browse Without Account" UX Flow — Detailed
+
+### Login Screen
+- Shows "Browse without account" button below the divider
+- Tapping it calls `router.replace('/(tabs)')` — navigates directly to the app
+- `auth.currentUser` will be `null` for this session
+
+### Auth State
+- `onAuthStateChanged` in `_layout.tsx` handles persistent login
+- Uses `useRef(false)` (not useState) to prevent re-render loops
+- If user has a saved session, routes to `/(tabs)` automatically
+- If no session, routes to `/login`
+
+### What Anonymous Users CAN Do
+- View the full bathroom list
+- See all scores, badges, and amenity info
+- View the map with all pins
+- Tap pins to see bathroom detail cards
+- Get directions to any bathroom
+
+### What Anonymous Users CANNOT Do
+- Leave a review
+- Add a new bathroom
+
+### How Blocking Works
+Every action that requires auth checks `auth.currentUser`:
+```typescript
+if (!auth.currentUser) {
+  router.push('/login');
+} else {
+  // proceed with action
+}
 ```
-cd C:\Users\s42r1\GottaGo
-git add .
-git commit -m "Add CLAUDE.md briefing document for Claude Code sessions"
-git push
+This check exists in:
+- List screen "Leave a Review" button
+- List screen "+ Add" header button
+- Map screen "Leave a Review" button
+- Map screen empty state "+ Add a Bathroom" button
+- add-bathroom.tsx itself (redundant safety check)
+
+The redirect pushes to `/login` (not replace) so the user can go back after signing in. The review and add-bathroom screens are not directly accessible via URL — they're always reached via button press which includes the auth check.
