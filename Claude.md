@@ -375,3 +375,67 @@ This check exists in:
 - add-bathroom.tsx itself (redundant safety check)
 
 The redirect pushes to `/login` (not replace) so the user can go back after signing in. The review and add-bathroom screens are not directly accessible via URL — they're always reached via button press which includes the auth check.
+
+## Claude Code Q&A — Additional Clarifications
+
+### Data & Logic
+
+**1. source: 'osm' vs source: 'seeded'**
+These are effectively the same thing and the inconsistency is a known artifact. Early seeded records (added via a one-time seedDatabase.js script) have source: 'seeded'. Records added via the Overpass API integration have source: 'osm'. In practice, treat both identically — unverified, no cleanliness score, community-contributed. The osmId field is only present on source: 'osm' records and is used for duplicate prevention. source: 'seeded' records have no osmId.
+
+**2. verified: true — client-side or Cloud Function?**
+Entirely client-side. Set directly in review.tsx during the review submission flow via updateDoc. There are no Firebase Cloud Functions in this project at all. Everything is client-side Firestore reads and writes.
+
+**3. lastCleaned format**
+Not an ISO string — it's a human-readable string. Examples:
+- `'Unknown'` — default for OSM and user-submitted bathrooms before first review
+- `'12 min ago'` — set during seeding for some early records
+- `'10:32 AM today'` — set at review submission time via `new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' today'`
+It is displayed directly as-is on the card. No date parsing happens on the frontend.
+
+**4. addedBy / addedByEmail for OSM bathrooms**
+Both are null for OSM-seeded bathrooms. Only user_submitted bathrooms have these fields populated.
+
+---
+
+### UX Flows
+
+**5. After redirect to login then sign in — where do they land?**
+They land at the home screen `/(tabs)`, not back at what they were trying to do. The redirect uses `router.push('/login')` which adds login to the stack, but after successful auth `router.replace('/(tabs)')` is called which clears the stack entirely. There is no "return to intended destination" flow currently implemented. This is a known UX gap accepted for v1.
+
+**6. Map bottom card actions**
+The card that slides up on pin tap has three buttons:
+- **✍️ Leave a Review** — navigates to `/review` with bathroomId and bathroomName params (auth-gated, redirects to login if not signed in)
+- **🗺 Directions** — opens native navigation app via `Linking.openURL` with Google Maps directions URL
+- **✕ Close** — dismisses the card, sets selected to null
+It is NOT info-only — full review and directions actions are available from the map card.
+
+---
+
+### Current Blockers
+
+**7. Status bar color — what's already been tried**
+Extensive attempts were made without success:
+- `statusBarColor` field in `app.json` under the android section — no effect
+- `statusBar` object in `app.json` with `backgroundColor` and `barStyle` — no effect
+- `<StatusBar style="light" backgroundColor="#0f172a" />` from expo-status-bar in `_layout.tsx` — no effect
+- Setting `edgeToEdgeEnabled: false` in app.json — caused layout issues, reverted
+The root cause is believed to be `edgeToEdgeEnabled: true` in app.json conflicting with status bar color settings. This is an Android-specific issue. The StatusBar component from expo-status-bar is already imported and used in `_layout.tsx`. Any solution must be compatible with `edgeToEdgeEnabled: true`.
+
+**8. App icon / splash screen design direction**
+Several kawaii-style options were generated via AI image tools and evaluated:
+- Kawaii toilet (Option A) — cute smiling toilet with sparkles, mint green background
+- Kawaii map pin + toilet (Option B) — map pin shape with toilet face inside, blue
+- Kawaii water drop (Option C) — smiling water drop with sparkles
+- Kawaii toilet paper + map pin (Option D) — toilet paper roll shaped as map pin
+- Kawaii bathroom sign (Option E) — cute gender-neutral bathroom figure
+
+None were selected as final. The login screen currently uses a large 🚽 emoji with sparkles as a placeholder hero. The developer is undecided and open to suggestions. Any icon must be 1024x1024px PNG for Play Store submission.
+
+---
+
+### Misc
+
+**9. Full file replacements vs surgical edits**
+The "full file replacements preferred" convention was specific to the web chat workflow where copy-paste was the only option. In Claude Code, please use precise surgical edits — only change what needs to change. This is cleaner, safer, and takes better advantage of Claude Code's direct file access. The convention in CLAUDE.md should be understood as a web chat artifact, not a preference for how code should be edited going forward.
+```
