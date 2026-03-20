@@ -281,12 +281,23 @@ export async function fetchAndSeedNearbyBathrooms(latitude: number, longitude: n
 - Seed database with real reviews before launch — **20 min**
 
 ### V4 Features:
-- Review success celebration screen — **15 min**
-- One review per user per bathroom — **15 min**
+- ~~Review success celebration screen~~ ✓
+- One review per user per bathroom *(shelved until testing complete)*
 - Share a bathroom via link — **20 min**
 - Save favorite bathrooms — **25 min**
 - Photo uploads on reviews — **60 min**
 - Better empty state for no bathrooms *(pending real-world test)*
+- Search bar on list screen — **20 min**
+- Last N days filter on list screen — **20 min**
+- "Is this bathroom still here?" confirm button on detail screen — **20 min**
+- Duplicate detection when adding a bathroom — **20 min**
+- Sort toggle on detail screen reviews (newest vs highest rated) — **15 min**
+
+### V4 Polish:
+- Pull to refresh on detail screen — **10 min**
+- Address tap opens Maps on detail screen — **5 min**
+- Chevron indicator on list cards — **5 min**
+- Near me auto-zoom on map screen — **15 min**
 
 ### Future:
 - User profiles with review history
