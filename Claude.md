@@ -228,29 +228,65 @@ export async function fetchAndSeedNearbyBathrooms(latitude: number, longitude: n
 
 ---
 
-## V3 Task List (Remaining)
-### Blocking for release:
+## Completed Features
+
+### Foundation (Web Chat Sessions)
+- First working screen
+- Map screen with GPS and colored pins
+- Firebase Firestore connection
+- Directions integration (list + map)
+- Firebase Auth (sign in, sign out, persistence)
+- Leave a review with real-time score updates
+- Add bathroom with GPS coordinates
+- OpenStreetMap integration for automatic bathroom seeding
+- OSM attribution on map screen
+- New/Not yet rated states for unreviewed bathrooms
+- Review count display
+- Community verified badge
+- Navy + teal theme across all screens
+- Empty states (list + map)
+- Expandable filter panel
+- Loading skeletons on list screen
+- Real distance calculation + nearest-first sorting
+- Map centering on user GPS (lastKnown fast path)
+- Haptic feedback throughout
+- Real addresses via reverse geocoding (OSM bathrooms)
+- Pull to refresh on list screen
+- Sort options + redesigned single-row control bar
+
+### Claude Code Sessions
+- Screen transition animations (fade, slide_from_bottom)
+- Location permission error handling across all screens
+- Star display instead of numbers (list + map cards)
+- Animated score bar fill on list cards (bar matches star rounding)
+- Better empty states (no bathrooms vs filtered out, motivating copy)
+- First-time onboarding flow (3 slides, AsyncStorage, skip button)
+- Last verified relative timestamp (2h ago, Yesterday, etc.)
+- Bathroom detail full screen
+- Review history on detail screen (masked email: stev••••)
+- Content reporting (report listing + report review → Firestore reports collection)
+- Return-to-destination login flow (report → sign in → back to detail)
+
+---
+
+## Remaining Task List
+
+### Blockers (shelved):
 - App icon + splash screen (artwork needed first)
 - Privacy policy (on hold — owner considering LLC vs personal)
 - Status bar color (stubborn Android issue)
 - Play Store listing content
 
-### High value:
-- Bathroom detail full screen
-- Seed database with real reviews before launch
+### V3 Remaining:
+- Seed database with real reviews before launch — **20 min**
 
-### Features:
-- Photo uploads on reviews
-- Review history on detail screen
-- Share a bathroom via link
-- Save favorite bathrooms
-- Flag inappropriate content
-
-### Polish:
-- Smooth screen transition animations
-- Better error messages
-- Last verified timestamp
-- Star display instead of numbers
+### V4 Features:
+- Review success celebration screen — **15 min**
+- One review per user per bathroom — **15 min**
+- Share a bathroom via link — **20 min**
+- Save favorite bathrooms — **25 min**
+- Photo uploads on reviews — **60 min**
+- Better empty state for no bathrooms *(pending real-world test)*
 
 ### Future:
 - User profiles with review history
