@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -9,14 +10,19 @@ import { auth } from '../firebaseConfig';
 
 SplashScreen.preventAutoHideAsync();
 
+const ONBOARDING_KEY = '@gottago/onboarding_complete';
+
 export default function RootLayout() {
   const hasRedirected = useRef(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!hasRedirected.current) {
         hasRedirected.current = true;
-        if (user) {
+        const onboardingDone = await AsyncStorage.getItem(ONBOARDING_KEY);
+        if (!onboardingDone) {
+          router.replace('/onboarding');
+        } else if (user) {
           router.replace('/(tabs)');
         } else {
           router.replace('/login');
@@ -32,6 +38,7 @@ export default function RootLayout() {
       <Stack screenOptions={{ contentStyle: { backgroundColor: '#0f172a' } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="login" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="onboarding" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="review" options={{ headerShown: false, animation: 'slide_from_bottom' }} />
         <Stack.Screen name="add-bathroom" options={{ headerShown: false, animation: 'slide_from_bottom' }} />
       </Stack>
