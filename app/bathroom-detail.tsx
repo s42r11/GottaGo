@@ -194,7 +194,14 @@ export default function BathroomDetailScreen() {
 
       {/* Name + address */}
       <Text style={styles.name}>{bathroom.name}</Text>
-      {bathroom.address ? <Text style={styles.address}>📍 {bathroom.address}</Text> : null}
+      {bathroom.address ? (
+        <TouchableOpacity onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(bathroom.address)}`);
+        }}>
+          <Text style={styles.address}>📍 <Text style={styles.addressLink}>{bathroom.address}</Text></Text>
+        </TouchableOpacity>
+      ) : null}
       {bathroom.floor ? <Text style={styles.floor}>{bathroom.floor}</Text> : null}
 
       {/* Score card */}
@@ -322,7 +329,8 @@ const styles = StyleSheet.create({
   reportReviewBtn: { alignSelf: 'flex-end', marginTop: 8 },
   reportReviewText: { fontSize: 11, color: '#475569', fontWeight: '600' },
   name: { fontSize: 26, fontWeight: '900', color: '#f8fafc', marginBottom: 6 },
-  address: { fontSize: 14, color: '#64748b', marginBottom: 2 },
+  address: { fontSize: 14, color: '#0d9488', marginBottom: 2 },
+  addressLink: { textDecorationLine: 'underline' },
   floor: { fontSize: 13, color: '#475569', marginBottom: 20 },
   scoreCard: { backgroundColor: '#1e293b', borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#334155' },
   scoreRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
