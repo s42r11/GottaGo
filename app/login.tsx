@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import React, { useState } from 'react';
 import {
@@ -16,6 +16,7 @@ import {
 import { auth } from '../firebaseConfig';
 
 export default function LoginScreen() {
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
@@ -37,7 +38,11 @@ export default function LoginScreen() {
         await signInWithEmailAndPassword(auth, email.trim(), password.trim());
       }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.replace('/(tabs)');
+      if (returnTo) {
+        router.replace({ pathname: '/bathroom-detail', params: { bathroomId: returnTo } });
+      } else {
+        router.replace('/(tabs)');
+      }
     } catch (e: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       if (e.code === 'auth/user-not-found') setError('No account found with that email');

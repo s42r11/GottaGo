@@ -1,9 +1,10 @@
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { router, useLocalSearchParams } from 'expo-router';
-import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   Animated,
   Linking,
   ScrollView,
@@ -102,6 +103,7 @@ export default function BathroomDetailScreen() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [distance, setDistance] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [reported, setReported] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     async function load() {
@@ -135,6 +137,34 @@ export default function BathroomDetailScreen() {
     );
   }
 
+  async function submitReport(type: 'bathroom' | 'review', reviewId?: string, reportedContent?: string) {
+    if (!auth.currentUser) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert(
+        'Sign In Required',
+        'You need an account to report content. It helps us keep reports accountable.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Sign In', onPress: () => router.push({ pathname: '/login', params: { returnTo: bathroom.id } }) },
+        ]
+      );
+      return;
+    }
+    const key = reviewId ?? 'bathroom';
+    if (reported.has(key)) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setReported(prev => new Set(prev).add(key));
+    await addDoc(collection(db, 'reports'), {
+      bathroomId: bathroom.id,
+      bathroomName: bathroom.name,
+      type,
+      reviewId: reviewId ?? null,
+      reportedContent: reportedContent ?? null,
+      reportedBy: auth.currentUser.uid,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
   const amenities = [
     bathroom.accessible && '♿ Accessible',
     bathroom.genderNeutral && '⚧ Gender Neutral',
@@ -153,6 +183,11 @@ export default function BathroomDetailScreen() {
           router.back();
         }} style={styles.backBtn}>
           <Text style={styles.backText}>← Back</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => submitReport('bathroom')} style={styles.reportBtn}>
+          <Text style={styles.reportText}>
+            {reported.has('bathroom') ? 'Reported ✓' : 'Report listing'}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -247,6 +282,13 @@ export default function BathroomDetailScreen() {
               </View>
               <Text style={styles.reviewRatingLabel}>{STAR_LABELS[r.rating]}</Text>
               {r.comment ? <Text style={styles.reviewComment}>{r.comment}</Text> : null}
+              <TouchableOpacity
+                onPress={() => submitReport('review', r.id, r.comment)}
+                style={styles.reportReviewBtn}>
+                <Text style={styles.reportReviewText}>
+                  {reported.has(r.id) ? 'Reported ✓' : 'Report review'}
+                </Text>
+              </TouchableOpacity>
             </View>
           ))
         )}
@@ -261,9 +303,13 @@ const styles = StyleSheet.create({
   inner: { padding: 24, paddingBottom: 60 },
   loadingContainer: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#64748b', fontSize: 15, fontWeight: '600' },
-  header: { marginTop: 40, marginBottom: 16 },
+  header: { marginTop: 40, marginBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   backBtn: { alignSelf: 'flex-start' },
   backText: { fontSize: 15, color: '#0d9488', fontWeight: '600' },
+  reportBtn: { alignSelf: 'flex-start' },
+  reportText: { fontSize: 12, color: '#475569', fontWeight: '600' },
+  reportReviewBtn: { alignSelf: 'flex-end', marginTop: 8 },
+  reportReviewText: { fontSize: 11, color: '#475569', fontWeight: '600' },
   name: { fontSize: 26, fontWeight: '900', color: '#f8fafc', marginBottom: 6 },
   address: { fontSize: 14, color: '#64748b', marginBottom: 2 },
   floor: { fontSize: 13, color: '#475569', marginBottom: 20 },
