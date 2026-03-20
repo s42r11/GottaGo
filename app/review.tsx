@@ -1,9 +1,10 @@
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { addDoc, collection, doc, getDoc, updateDoc } from 'firebase/firestore';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -23,6 +24,8 @@ export default function ReviewScreen() {
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [celebrated, setCelebrated] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   async function handleSubmit() {
     if (rating === 0) {
@@ -58,7 +61,9 @@ export default function ReviewScreen() {
         });
       }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.back();
+      setCelebrated(true);
+      Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+      setTimeout(() => router.back(), 1800);
     } catch (e: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       console.log('Review error:', e.code, e.message);
@@ -141,12 +146,25 @@ export default function ReviewScreen() {
         </TouchableOpacity>
 
       </ScrollView>
+
+      {celebrated && (
+        <Animated.View style={[styles.celebration, { opacity: fadeAnim }]}>
+          <Text style={styles.celebrationEmoji}>🎉</Text>
+          <Text style={styles.celebrationTitle}>Review Submitted!</Text>
+          <Text style={styles.celebrationSub}>Thanks for helping the community.</Text>
+        </Animated.View>
+      )}
+
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0f172a' },
+  celebration: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center', gap: 12 },
+  celebrationEmoji: { fontSize: 80 },
+  celebrationTitle: { fontSize: 28, fontWeight: '900', color: '#f8fafc' },
+  celebrationSub: { fontSize: 16, color: '#64748b', fontWeight: '500' },
   inner: { padding: 24 },
   header: { marginBottom: 16, marginTop: 40 },
   backBtn: { alignSelf: 'flex-start' },

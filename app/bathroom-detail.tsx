@@ -1,8 +1,8 @@
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { addDoc, collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
@@ -105,7 +105,7 @@ export default function BathroomDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [reported, setReported] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     async function load() {
       const snap = await getDoc(doc(db, 'bathrooms', bathroomId));
       if (!snap.exists()) return;
@@ -127,7 +127,7 @@ export default function BathroomDetailScreen() {
       setLoading(false);
     }
     load();
-  }, [bathroomId]);
+  }, [bathroomId]));
 
   if (loading || !bathroom) {
     return (
