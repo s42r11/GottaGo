@@ -283,7 +283,7 @@ export async function fetchAndSeedNearbyBathrooms(latitude: number, longitude: n
 ### V4 Features:
 - ~~Review success celebration screen~~ ✓
 - One review per user per bathroom *(shelved until testing complete)*
-- Share a bathroom via link — **20 min**
+- ~~Share a bathroom via link~~ ✓ *(pending real build test)*
 - Save favorite bathrooms — **25 min**
 - Photo uploads on reviews — **60 min**
 - Better empty state for no bathrooms *(pending real-world test)*

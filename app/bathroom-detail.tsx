@@ -8,6 +8,7 @@ import {
   Animated,
   Linking,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -252,7 +253,7 @@ export default function BathroomDetailScreen() {
               router.push({ pathname: '/review', params: { bathroomId: bathroom.id, bathroomName: bathroom.name } });
             }
           }}>
-          <Text style={styles.btnText}>✍️ Leave a Review</Text>
+          <Text style={styles.btnText}>✍️ Review</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.btnOutline}
@@ -261,6 +262,16 @@ export default function BathroomDetailScreen() {
             Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${bathroom.latitude},${bathroom.longitude}`);
           }}>
           <Text style={styles.btnOutlineText}>🗺 Directions</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.btnOutline}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            Share.share({
+              message: `Check out ${bathroom.name} on GottaGo!\ngottago://bathroom-detail?bathroomId=${bathroom.id}`,
+            });
+          }}>
+          <Text style={styles.btnOutlineText}>🔗 Share</Text>
         </TouchableOpacity>
       </View>
 
