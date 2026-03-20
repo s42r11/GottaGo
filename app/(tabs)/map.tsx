@@ -35,6 +35,11 @@ function getLabel(score: number) {
   return 'Rough';
 }
 
+function renderStars(score: number): string {
+  const filled = Math.round(score);
+  return '★'.repeat(filled) + '☆'.repeat(5 - filled);
+}
+
 export default function MapScreen() {
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -165,15 +170,12 @@ export default function MapScreen() {
               setSelected(b.id);
             }}
           >
-            <View style={[styles.pin, {
-              borderColor: b.cleanliness === 0 ? '#475569' : getColor(b.cleanliness),
-              backgroundColor: b.cleanliness === 0 ? '#1e293b' : '#0f172a',
-            }]}>
-              <Text style={[styles.pinScore, {
-                color: b.cleanliness === 0 ? '#475569' : getColor(b.cleanliness)
-              }]}>
-                {b.cleanliness === 0 ? '★ New' : b.cleanliness.toFixed(1)}
-              </Text>
+            <View style={[styles.pinOuter, { backgroundColor: b.cleanliness === 0 ? '#475569' : getColor(b.cleanliness) }]}>
+              <View style={[styles.pinInner, { backgroundColor: b.cleanliness === 0 ? '#1e293b' : '#0f172a' }]}>
+                <Text style={[styles.pinScore, { color: b.cleanliness === 0 ? '#475569' : getColor(b.cleanliness) }]}>
+                  {b.cleanliness === 0 ? '★ New' : b.cleanliness.toFixed(1)}
+                </Text>
+              </View>
             </View>
           </Marker>
         ))}
@@ -201,7 +203,7 @@ export default function MapScreen() {
               <Text style={[styles.score, {
                 color: selectedBathroom.cleanliness === 0 ? '#475569' : getColor(selectedBathroom.cleanliness)
               }]}>
-                {selectedBathroom.cleanliness === 0 ? 'New' : selectedBathroom.cleanliness.toFixed(1)}
+                {selectedBathroom.cleanliness === 0 ? 'New' : renderStars(selectedBathroom.cleanliness)}
               </Text>
             </View>
           </View>
@@ -257,7 +259,8 @@ const styles = StyleSheet.create({
   logo: { fontSize: 26, fontWeight: '800', color: '#f8fafc' },
   subtitle: { fontSize: 13, color: '#64748b', marginTop: 2 },
   map: { flex: 1 },
-  pin: { borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 2.5, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4, elevation: 4, maxWidth: 120 },
+  pinOuter: { borderRadius: 10, padding: 2.5, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 },
+  pinInner: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   pinScore: { fontSize: 12, fontWeight: '900' },
   attribution: { position: 'absolute', bottom: 8, left: 8, backgroundColor: 'rgba(15,23,42,0.8)', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
   attributionText: { fontSize: 10, color: '#64748b' },
@@ -266,7 +269,7 @@ const styles = StyleSheet.create({
   cardName: { fontSize: 17, fontWeight: '800', color: '#f8fafc' },
   cardLabel: { fontSize: 13, fontWeight: '600', marginTop: 3 },
   scoreBox: { marginLeft: 12 },
-  score: { fontSize: 28, fontWeight: '900' },
+  score: { fontSize: 18, fontWeight: '900' },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
   verifiedBadge: { fontSize: 11, fontWeight: '700', backgroundColor: '#134e4a', color: '#2dd4bf', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
   badge: { fontSize: 11, fontWeight: '600', backgroundColor: '#0f2744', color: '#7dd3fc', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },

@@ -38,6 +38,11 @@ function getLabel(score: number) {
   return 'Rough';
 }
 
+function renderStars(score: number): string {
+  const filled = Math.round(score);
+  return '★'.repeat(filled) + '☆'.repeat(5 - filled);
+}
+
 const FILTER_OPTIONS = [
   { key: 'free', label: '🆓', fullLabel: '🆓 Free' },
   { key: 'accessible', label: '♿', fullLabel: '♿ Accessible' },
@@ -351,7 +356,7 @@ export default function HomeScreen() {
                   </View>
                   <View style={styles.scoreBox}>
                     <Text style={[styles.score, { color: b.cleanliness === 0 ? '#475569' : getColor(b.cleanliness) }]}>
-                      {b.cleanliness === 0 ? 'New' : b.cleanliness.toFixed(1)}
+                      {b.cleanliness === 0 ? 'New' : renderStars(b.cleanliness)}
                     </Text>
                     <Text style={[styles.scoreLabel, { color: b.cleanliness === 0 ? '#475569' : getColor(b.cleanliness) }]}>
                       {b.cleanliness === 0 ? 'Not yet rated' : `${getLabel(b.cleanliness)} · ${b.reviewCount || 0} reviews`}
@@ -462,7 +467,7 @@ const styles = StyleSheet.create({
   cardName: { fontSize: 15, fontWeight: '700', color: '#f8fafc' },
   cardSub: { fontSize: 12, color: '#475569', marginTop: 3 },
   scoreBox: { alignItems: 'flex-end', marginLeft: 12 },
-  score: { fontSize: 22, fontWeight: '900' },
+  score: { fontSize: 16, fontWeight: '900' },
   scoreLabel: { fontSize: 10, fontWeight: '700' },
   barBg: { height: 6, backgroundColor: '#334155', borderRadius: 99, marginBottom: 10, overflow: 'hidden' },
   barFill: { height: '100%', borderRadius: 99 },
