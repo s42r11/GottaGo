@@ -89,6 +89,7 @@ export default function HomeScreen() {
   const [filters, setFilters] = useState<string[]>([]);
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locationDenied, setLocationDenied] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('nearest');
 
   function toggleFilter(filter: string) {
@@ -125,6 +126,10 @@ export default function HomeScreen() {
     let cancelled = false;
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        if (!cancelled) setLocationDenied(true);
+        return;
+      }
       if (status === 'granted') {
         const lastKnown = await Location.getLastKnownPositionAsync({});
         if (lastKnown && !cancelled) {
@@ -154,7 +159,7 @@ export default function HomeScreen() {
     return {
       ...b,
       distanceMiles,
-      distance: userLocation ? formatDistance(distanceMiles) : 'Locating...',
+      distance: userLocation ? formatDistance(distanceMiles) : locationDenied ? 'Location off' : 'Locating...',
     };
   });
 

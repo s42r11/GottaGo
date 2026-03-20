@@ -97,6 +97,18 @@ export default function MapScreen() {
 
   const selectedBathroom = bathrooms.find(b => b.id === selected);
 
+  if (errorMsg) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={{ fontSize: 56, marginBottom: 16 }}>📍</Text>
+        <Text style={{ fontSize: 18, fontWeight: '700', color: '#f8fafc', marginBottom: 8 }}>Location Required</Text>
+        <Text style={{ fontSize: 14, color: '#64748b', textAlign: 'center', paddingHorizontal: 40 }}>
+          Please enable location permission in your device settings to use the map.
+        </Text>
+      </View>
+    );
+  }
+
   if (loading || !initialRegion) {
     return (
       <View style={styles.loadingContainer}>

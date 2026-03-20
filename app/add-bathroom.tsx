@@ -66,11 +66,15 @@ export default function AddBathroomScreen() {
       let longitude = 0;
 
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === 'granted') {
-        const loc = await Location.getCurrentPositionAsync({});
-        latitude = loc.coords.latitude;
-        longitude = loc.coords.longitude;
+      if (status !== 'granted') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setError('Location permission is required to add a bathroom. Please enable it in your device settings.');
+        setLoading(false);
+        return;
       }
+      const loc = await Location.getCurrentPositionAsync({});
+      latitude = loc.coords.latitude;
+      longitude = loc.coords.longitude;
 
       await addDoc(collection(db, 'bathrooms'), {
         name: name.trim(),
