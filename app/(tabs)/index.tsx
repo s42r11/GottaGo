@@ -86,6 +86,28 @@ function SkeletonCard() {
   );
 }
 
+function AnimatedBar({ cleanliness }: { cleanliness: number }) {
+  const anim = useRef(new Animated.Value(0)).current;
+  const targetWidth = cleanliness === 0 ? 0 : (Math.round(cleanliness) / 5) * 100;
+
+  useEffect(() => {
+    Animated.timing(anim, {
+      toValue: targetWidth,
+      duration: 600,
+      useNativeDriver: false,
+    }).start();
+  }, [targetWidth]);
+
+  return (
+    <View style={styles.barBg}>
+      <Animated.View style={[styles.barFill, {
+        width: anim.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'] }),
+        backgroundColor: cleanliness === 0 ? '#1e293b' : getColor(cleanliness),
+      }]} />
+    </View>
+  );
+}
+
 export default function HomeScreen() {
   const [selected, setSelected] = useState<string | null>(null);
   const [bathrooms, setBathrooms] = useState<Bathroom[]>([]);
@@ -325,11 +347,30 @@ export default function HomeScreen() {
           </>
         ) : (
           <>
-            {filtered.length === 0 && (
+            {filtered.length === 0 && bathrooms.length === 0 && (
+              <View style={styles.empty}>
+                <Text style={styles.emptyIcon}>🗺️</Text>
+                <Text style={styles.emptyText}>No restrooms here yet</Text>
+                <Text style={styles.emptySubtext}>You could be the first to add one in your neighborhood. Every great community starts somewhere!</Text>
+                <TouchableOpacity
+                  style={styles.emptyBtn}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    if (!auth.currentUser) {
+                      router.push('/login');
+                    } else {
+                      router.push('/add-bathroom');
+                    }
+                  }}>
+                  <Text style={styles.emptyBtnText}>+ Add the First One</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            {filtered.length === 0 && bathrooms.length > 0 && (
               <View style={styles.empty}>
                 <Text style={styles.emptyIcon}>🚽</Text>
                 <Text style={styles.emptyText}>No restrooms match your filters</Text>
-                <Text style={styles.emptySubtext}>Try removing some filters or add one yourself!</Text>
+                <Text style={styles.emptySubtext}>Try loosening your filters to see more results.</Text>
                 <TouchableOpacity
                   style={styles.emptyBtn}
                   onPress={() => {
@@ -364,12 +405,7 @@ export default function HomeScreen() {
                   </View>
                 </View>
 
-                <View style={styles.barBg}>
-                  <View style={[styles.barFill, {
-                    width: b.cleanliness === 0 ? '0%' : `${(b.cleanliness / 5) * 100}%`,
-                    backgroundColor: b.cleanliness === 0 ? '#1e293b' : getColor(b.cleanliness)
-                  }]} />
-                </View>
+                <AnimatedBar cleanliness={b.cleanliness} />
 
                 <View style={styles.badges}>
                   {b.verified && <Text style={styles.verifiedBadge}>✓ Verified</Text>}
