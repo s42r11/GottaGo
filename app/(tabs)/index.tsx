@@ -4,7 +4,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import { collection, getDocs } from 'firebase/firestore';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Linking, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
 import { formatDistance, formatLastVerified, getDistanceMiles } from '../../utils/distance';
 
@@ -109,7 +109,6 @@ function AnimatedBar({ cleanliness }: { cleanliness: number }) {
 }
 
 export default function HomeScreen() {
-  const [selected, setSelected] = useState<string | null>(null);
   const [bathrooms, setBathrooms] = useState<Bathroom[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -384,10 +383,10 @@ export default function HomeScreen() {
             {filtered.map(b => (
               <TouchableOpacity
                 key={b.id}
-                style={[styles.card, selected === b.id && styles.cardSelected]}
+                style={styles.card}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  setSelected(selected === b.id ? null : b.id);
+                  router.push({ pathname: '/bathroom-detail', params: { bathroomId: b.id } });
                 }}
               >
                 <View style={styles.cardTop}>
@@ -414,32 +413,6 @@ export default function HomeScreen() {
                   {b.free && <Text style={styles.badge}>🆓 Free</Text>}
                   {b.babyChanging && <Text style={styles.badge}>👶 Baby</Text>}
                 </View>
-
-                {selected === b.id && (
-                  <View style={styles.detail}>
-                    <TouchableOpacity
-                      style={styles.btn}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        if (!auth.currentUser) {
-                          router.push('/login');
-                        } else {
-                          router.push({ pathname: '/review', params: { bathroomId: b.id, bathroomName: b.name } });
-                        }
-                      }}>
-                      <Text style={styles.btnText}>✍️ Leave a Review</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.btnOutline}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        const url = `https://www.google.com/maps/dir/?api=1&destination=${b.latitude},${b.longitude}`;
-                        Linking.openURL(url);
-                      }}>
-                      <Text style={styles.btnOutlineText}>🗺 Directions</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
               </TouchableOpacity>
             ))}
           </>

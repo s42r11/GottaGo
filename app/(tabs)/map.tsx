@@ -221,13 +221,9 @@ export default function MapScreen() {
               style={styles.btn}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                if (!auth.currentUser) {
-                  router.push('/login');
-                } else {
-                  router.push({ pathname: '/review', params: { bathroomId: selectedBathroom.id, bathroomName: selectedBathroom.name } });
-                }
+                router.push({ pathname: '/bathroom-detail', params: { bathroomId: selectedBathroom.id } });
               }}>
-              <Text style={styles.btnText}>✍️ Leave a Review</Text>
+              <Text style={styles.btnText}>View Details</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.btnOutline}
