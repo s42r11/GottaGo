@@ -402,6 +402,7 @@ export default function HomeScreen() {
                       {b.cleanliness === 0 ? 'Not yet rated' : `${getLabel(b.cleanliness)} · ${b.reviewCount || 0} reviews`}
                     </Text>
                   </View>
+                  <Text style={styles.chevron}>›</Text>
                 </View>
 
                 <AnimatedBar cleanliness={b.cleanliness} />
@@ -476,6 +477,7 @@ const styles = StyleSheet.create({
   cardName: { fontSize: 15, fontWeight: '700', color: '#f8fafc' },
   cardSub: { fontSize: 12, color: '#475569', marginTop: 3 },
   scoreBox: { alignItems: 'flex-end', marginLeft: 12 },
+  chevron: { fontSize: 20, color: '#334155', marginLeft: 8, alignSelf: 'center' },
   score: { fontSize: 16, fontWeight: '900' },
   scoreLabel: { fontSize: 10, fontWeight: '700' },
   barBg: { height: 6, backgroundColor: '#334155', borderRadius: 99, marginBottom: 10, overflow: 'hidden' },
