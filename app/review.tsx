@@ -54,7 +54,7 @@ export default function ReviewScreen() {
           cleanliness: Math.round(newRating * 10) / 10,
           reviewCount: newCount,
           verified: true,
-          lastCleaned: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' today',
+          lastCleaned: new Date().toISOString(),
         });
       }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

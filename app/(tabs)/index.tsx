@@ -6,7 +6,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Linking, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
-import { formatDistance, getDistanceMiles } from '../../utils/distance';
+import { formatDistance, formatLastVerified, getDistanceMiles } from '../../utils/distance';
 
 type Bathroom = {
   id: string;
@@ -393,7 +393,7 @@ export default function HomeScreen() {
                 <View style={styles.cardTop}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.cardName}>{b.name}</Text>
-                    <Text style={styles.cardSub}>📍 {b.distance}  ·  🧹 {b.lastCleaned}</Text>
+                    <Text style={styles.cardSub}>📍 {b.distance}  ·  ✓ {formatLastVerified(b.lastCleaned)}</Text>
                   </View>
                   <View style={styles.scoreBox}>
                     <Text style={[styles.score, { color: b.cleanliness === 0 ? '#475569' : getColor(b.cleanliness) }]}>

@@ -18,3 +18,17 @@ export function formatDistance(miles: number): string {
   if (miles < 0.2) return '< 0.2 mi';
   return `${miles.toFixed(1)} mi`;
 }
+
+export function formatLastVerified(lastCleaned: string): string {
+  if (!lastCleaned || lastCleaned === 'Unknown') return 'Not yet verified';
+  const date = new Date(lastCleaned);
+  if (isNaN(date.getTime())) return lastCleaned; // legacy string fallback
+  const minutes = Math.floor((Date.now() - date.getTime()) / 60000);
+  if (minutes < 1) return 'Just verified';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'Yesterday';
+  return `${days} days ago`;
+}
