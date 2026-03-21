@@ -19,7 +19,7 @@
       },
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyANIBXjOsH8Tfze6c-dAiQcnGbrqlYXj0A"
+          "apiKey": ""
         }
       },
       "edgeToEdgeEnabled": true,
@@ -50,6 +50,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9a1f9d5f-8d3a-45f2-9e3c-bd3d3878225a"
+      }
+    },
+    "owner": "steven.reif"
   }
 }
