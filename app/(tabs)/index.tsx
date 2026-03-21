@@ -27,9 +27,9 @@ type Bathroom = {
 };
 
 function getColor(score: number) {
-  if (score >= 4.5) return '#86efac';
-  if (score >= 3.5) return '#fcd34d';
-  return '#fca5a5';
+  if (score >= 4.5) return 'rgba(250, 204, 21, 0.9)';
+  if (score >= 3.5) return 'rgba(250, 204, 21, 0.65)';
+  return 'rgba(250, 204, 21, 0.45)';
 }
 
 function getLabel(score: number) {
