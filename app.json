@@ -19,7 +19,7 @@
       },
       "config": {
         "googleMaps": {
-          "apiKey": "your_new_key_here"
+          "apiKey": "AIzaSyANIBXjOsH8Tfze6c-dAiQcnGbrqlYXj0A"
         }
       },
       "edgeToEdgeEnabled": true,
@@ -38,9 +38,9 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#0f172a",
+          "backgroundColor": "#facc15",
           "dark": {
-            "backgroundColor": "#0f172a"
+            "backgroundColor": "#facc15"
           }
         }
       ],
