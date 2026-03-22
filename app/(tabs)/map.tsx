@@ -3,7 +3,7 @@ import * as Location from 'expo-location';
 import { router, useFocusEffect } from 'expo-router';
 import { collection, getDocs } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ActivityIndicator, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { auth, db } from '../../firebaseConfig';
 import { fetchAndSeedNearbyBathrooms } from '../../utils/overpass';
@@ -134,7 +134,15 @@ export default function MapScreen() {
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             if (!auth.currentUser) {
-              router.push('/login');
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+              Alert.alert(
+                'Sign In Required',
+                'You need an account to add a bathroom. It helps us keep listings trustworthy.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Sign In', onPress: () => router.push('/login') },
+                ]
+              );
             } else {
               router.push('/add-bathroom');
             }

@@ -4,7 +4,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import { collection, getDocs } from 'firebase/firestore';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
 import { formatDistance, formatLastVerified, getDistanceMiles } from '../../utils/distance';
 
@@ -230,7 +230,15 @@ export default function HomeScreen() {
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               if (!auth.currentUser) {
-                router.push('/login');
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                Alert.alert(
+                  'Sign In Required',
+                  'You need an account to add a bathroom. It helps us keep listings trustworthy.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Sign In', onPress: () => router.push('/login') },
+                  ]
+                );
               } else {
                 router.push('/add-bathroom');
               }

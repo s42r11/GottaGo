@@ -255,7 +255,15 @@ export default function BathroomDetailScreen() {
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             if (!auth.currentUser) {
-              router.push('/login');
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+              Alert.alert(
+                'Sign In Required',
+                'You need an account to leave a review. It helps us keep ratings trustworthy.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Sign In', onPress: () => router.push({ pathname: '/login', params: { returnTo: bathroom.id } }) },
+                ]
+              );
             } else {
               router.push({ pathname: '/review', params: { bathroomId: bathroom.id, bathroomName: bathroom.name } });
             }
