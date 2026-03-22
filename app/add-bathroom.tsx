@@ -54,12 +54,6 @@ export default function AddBathroomScreen() {
       setError('Please enter a name for this bathroom');
       return;
     }
-    if (!address.trim()) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setError('Please enter an address');
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
@@ -74,11 +68,27 @@ export default function AddBathroomScreen() {
         setLoading(false);
         return;
       }
-      const loc = await Location.getCurrentPositionAsync({});
+
+      const [loc, snapshot] = await Promise.all([
+        Location.getCurrentPositionAsync({}),
+        getDocs(collection(db, 'bathrooms')),
+      ]);
       latitude = loc.coords.latitude;
       longitude = loc.coords.longitude;
 
-      const snapshot = await getDocs(collection(db, 'bathrooms'));
+      let resolvedAddress = address.trim();
+      if (!resolvedAddress) {
+        try {
+          const geocode = await Location.reverseGeocodeAsync({ latitude, longitude });
+          if (geocode.length > 0) {
+            const g = geocode[0];
+            const parts = [g.streetNumber, g.street, g.city, g.region].filter(Boolean);
+            resolvedAddress = parts.join(', ');
+          }
+        } catch {
+          resolvedAddress = '';
+        }
+      }
       const nearby = snapshot.docs
         .map(d => ({ name: d.data().name, latitude: d.data().latitude, longitude: d.data().longitude }))
         .find(b => getDistanceMiles(latitude, longitude, b.latitude, b.longitude) < 0.06);
@@ -91,13 +101,13 @@ export default function AddBathroomScreen() {
           `"${nearby.name}" is already listed nearby. Are you sure this is a different bathroom?`,
           [
             { text: 'Cancel', style: 'cancel' },
-            { text: 'Add Anyway', onPress: () => submitBathroom(latitude, longitude) },
+            { text: 'Add Anyway', onPress: () => submitBathroom(latitude, longitude, resolvedAddress) },
           ]
         );
         return;
       }
 
-      await submitBathroom(latitude, longitude);
+      await submitBathroom(latitude, longitude, resolvedAddress);
     } catch (e: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       console.log('Add bathroom error:', e.code, e.message);
@@ -107,12 +117,12 @@ export default function AddBathroomScreen() {
     }
   }
 
-  async function submitBathroom(latitude: number, longitude: number) {
+  async function submitBathroom(latitude: number, longitude: number, resolvedAddress: string) {
     setLoading(true);
     try {
       await addDoc(collection(db, 'bathrooms'), {
         name: name.trim(),
-        address: address.trim(),
+        address: resolvedAddress,
         floor: floor.trim(),
         accessible,
         genderNeutral,
@@ -172,7 +182,7 @@ export default function AddBathroomScreen() {
           />
           <TextInput
             style={styles.input}
-            placeholder="Address e.g. 214 Ponce De Leon Ave NE"
+            placeholder="Address (optional — auto-detected if blank)"
             placeholderTextColor="#475569"
             value={address}
             onChangeText={setAddress}
