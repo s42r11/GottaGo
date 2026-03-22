@@ -236,5 +236,5 @@ const styles = StyleSheet.create({
     borderColor: '#2a2a2a',
   },
   guestText: { color: '#888888', fontWeight: '700', fontSize: 14 },
-  footer: { textAlign: 'center', fontSize: 11, color: '#2a2a2a', paddingBottom: 32, zIndex: 1 },
+  footer: { textAlign: 'center', fontSize: 11, color: '#555555', paddingBottom: 32, zIndex: 1 },
 });
