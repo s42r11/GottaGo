@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
   cardName: { fontSize: 15, fontWeight: '700', color: '#f8fafc' },
   cardSub: { fontSize: 12, color: '#555555', marginTop: 3 },
   scoreBox: { alignItems: 'flex-end', marginLeft: 12 },
-  chevron: { fontSize: 20, color: '#2a2a2a', marginLeft: 8, alignSelf: 'center' },
+  chevron: { fontSize: 20, color: '#facc15', marginLeft: 8, alignSelf: 'center' },
   score: { fontSize: 16, fontWeight: '900' },
   scoreLabel: { fontSize: 10, fontWeight: '700' },
   barBg: { height: 6, backgroundColor: '#2a2a2a', borderRadius: 99, marginBottom: 10, overflow: 'hidden' },
