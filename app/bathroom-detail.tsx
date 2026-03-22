@@ -7,6 +7,7 @@ import {
   Alert,
   Animated,
   Linking,
+  RefreshControl,
   ScrollView,
   Share,
   StyleSheet,
@@ -104,31 +105,39 @@ export default function BathroomDetailScreen() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [distance, setDistance] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [reported, setReported] = useState<Set<string>>(new Set());
 
-  useFocusEffect(useCallback(() => {
-    async function load() {
-      const snap = await getDoc(doc(db, 'bathrooms', bathroomId));
-      if (!snap.exists()) return;
-      const data = { id: snap.id, ...snap.data() } as Bathroom;
-      setBathroom(data);
+  async function load() {
+    const snap = await getDoc(doc(db, 'bathrooms', bathroomId));
+    if (!snap.exists()) return;
+    const data = { id: snap.id, ...snap.data() } as Bathroom;
+    setBathroom(data);
 
-      const reviewSnap = await getDocs(query(collection(db, 'reviews'), where('bathroomId', '==', bathroomId)));
-      const reviewData = reviewSnap.docs
-        .map(d => ({ id: d.id, ...d.data() } as Review))
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setReviews(reviewData);
+    const reviewSnap = await getDocs(query(collection(db, 'reviews'), where('bathroomId', '==', bathroomId)));
+    const reviewData = reviewSnap.docs
+      .map(d => ({ id: d.id, ...d.data() } as Review))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    setReviews(reviewData);
 
-      const loc = await Location.getLastKnownPositionAsync({});
-      if (loc) {
-        const miles = getDistanceMiles(loc.coords.latitude, loc.coords.longitude, data.latitude, data.longitude);
-        setDistance(formatDistance(miles));
-      }
-
-      setLoading(false);
+    const loc = await Location.getLastKnownPositionAsync({});
+    if (loc) {
+      const miles = getDistanceMiles(loc.coords.latitude, loc.coords.longitude, data.latitude, data.longitude);
+      setDistance(formatDistance(miles));
     }
+
+    setLoading(false);
+  }
+
+  useFocusEffect(useCallback(() => {
     load();
   }, [bathroomId]));
+
+  async function onRefresh() {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }
 
   if (loading || !bathroom) {
     return (
@@ -175,7 +184,11 @@ export default function BathroomDetailScreen() {
   ].filter(Boolean) as string[];
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.inner}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.inner}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#facc15" colors={['#facc15']} />}
+    >
 
       {/* Header */}
       <View style={styles.header}>
