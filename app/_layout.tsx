@@ -35,7 +35,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={DarkTheme}>
-      <Stack screenOptions={{ contentStyle: { backgroundColor: '#0f172a' } }}>
+      <Stack screenOptions={{ contentStyle: { backgroundColor: '#111111' } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="login" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false, animation: 'fade' }} />
@@ -43,7 +43,7 @@ export default function RootLayout() {
         <Stack.Screen name="review" options={{ headerShown: false, animation: 'slide_from_bottom' }} />
         <Stack.Screen name="add-bathroom" options={{ headerShown: false, animation: 'slide_from_bottom' }} />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style="light" />
     </ThemeProvider>
   );
 }
