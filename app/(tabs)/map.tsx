@@ -2,7 +2,7 @@ import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { router, useFocusEffect } from 'expo-router';
 import { collection, getDocs } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Alert, ActivityIndicator, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { auth, db } from '../../firebaseConfig';
@@ -46,6 +46,7 @@ export default function MapScreen() {
   const [selected, setSelected] = useState<string | null>(null);
   const [bathrooms, setBathrooms] = useState<Bathroom[]>([]);
   const [loading, setLoading] = useState(true);
+  const mapRef = useRef<MapView>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,6 +84,16 @@ export default function MapScreen() {
             ...doc.data()
           })) as Bathroom[];
           setBathrooms(data);
+          if (location) {
+            setTimeout(() => {
+              mapRef.current?.animateToRegion({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+                latitudeDelta: 0.02,
+                longitudeDelta: 0.02,
+              }, 600);
+            }, 500);
+          }
         } catch (error) {
           console.error('Error fetching bathrooms:', error);
         } finally {
@@ -90,8 +101,19 @@ export default function MapScreen() {
         }
       }
       fetchBathrooms();
-    }, [])
+    }, [location])
   );
+
+  function zoomToNearMe() {
+    if (!location) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    mapRef.current?.animateToRegion({
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    }, 600);
+  }
 
   const initialRegion = location ? {
     latitude: location.coords.latitude,
@@ -156,13 +178,19 @@ export default function MapScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.logo}>🚽 GottaGo</Text>
-        <Text style={styles.subtitle}>
-          {errorMsg ?? (location ? '📍 Using your location' : '📍 Finding your location...')}
-        </Text>
+        <View>
+          <Text style={styles.logo}>🚽 GottaGo</Text>
+          <Text style={styles.subtitle}>
+            {errorMsg ?? (location ? '📍 Using your location' : '📍 Finding your location...')}
+          </Text>
+        </View>
+        <TouchableOpacity onPress={zoomToNearMe} style={styles.nearMeBtn}>
+          <Text style={styles.nearMeBtnText}>📍 Near Me</Text>
+        </TouchableOpacity>
       </View>
 
       <MapView
+        ref={mapRef}
         style={styles.map}
         initialRegion={initialRegion}
         showsUserLocation={true}
@@ -259,7 +287,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#111111' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#111111' },
   loadingText: { marginTop: 12, fontSize: 14, color: '#888888', fontWeight: '600' },
-  header: { backgroundColor: '#1c1c1c', padding: 20, paddingTop: 60, borderBottomWidth: 1, borderBottomColor: '#2a2a2a' },
+  header: { backgroundColor: '#1c1c1c', padding: 20, paddingTop: 60, borderBottomWidth: 1, borderBottomColor: '#2a2a2a', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  nearMeBtn: { backgroundColor: '#facc15', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
+  nearMeBtnText: { fontSize: 12, fontWeight: '700', color: '#111111' },
   logo: { fontSize: 26, fontWeight: '800', color: '#facc15' },
   subtitle: { fontSize: 13, color: '#888888', marginTop: 2 },
   map: { flex: 1 },
