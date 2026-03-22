@@ -45,9 +45,9 @@ type Review = {
 };
 
 function getColor(score: number) {
-  if (score >= 4.5) return '#22c55e';
-  if (score >= 3.5) return '#f59e0b';
-  return '#f43f5e';
+  if (score >= 4.5) return 'rgba(250, 204, 21, 0.9)';
+  if (score >= 3.5) return 'rgba(250, 204, 21, 0.65)';
+  return 'rgba(250, 204, 21, 0.45)';
 }
 
 function getLabel(score: number) {
@@ -317,46 +317,46 @@ export default function BathroomDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f172a' },
+  container: { flex: 1, backgroundColor: '#111111' },
   inner: { padding: 24, paddingBottom: 60 },
-  loadingContainer: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#64748b', fontSize: 15, fontWeight: '600' },
+  loadingContainer: { flex: 1, backgroundColor: '#111111', justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: '#888888', fontSize: 15, fontWeight: '600' },
   header: { marginTop: 40, marginBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   backBtn: { alignSelf: 'flex-start' },
-  backText: { fontSize: 15, color: '#0d9488', fontWeight: '600' },
+  backText: { fontSize: 15, color: '#facc15', fontWeight: '600' },
   reportBtn: { alignSelf: 'flex-start' },
-  reportText: { fontSize: 12, color: '#475569', fontWeight: '600' },
+  reportText: { fontSize: 12, color: '#555555', fontWeight: '600' },
   reportReviewBtn: { alignSelf: 'flex-end', marginTop: 8 },
-  reportReviewText: { fontSize: 11, color: '#475569', fontWeight: '600' },
+  reportReviewText: { fontSize: 11, color: '#555555', fontWeight: '600' },
   name: { fontSize: 26, fontWeight: '900', color: '#f8fafc', marginBottom: 6 },
-  address: { fontSize: 14, color: '#0d9488', marginBottom: 2 },
+  address: { fontSize: 14, color: '#facc15', marginBottom: 2 },
   addressLink: { textDecorationLine: 'underline' },
-  floor: { fontSize: 13, color: '#475569', marginBottom: 20 },
-  scoreCard: { backgroundColor: '#1e293b', borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#334155' },
+  floor: { fontSize: 13, color: '#555555', marginBottom: 20 },
+  scoreCard: { backgroundColor: '#1c1c1c', borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#2a2a2a' },
   scoreRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   stars: { fontSize: 20, fontWeight: '900', marginBottom: 4 },
   scoreLabel: { fontSize: 13, fontWeight: '600' },
   bigScore: { fontSize: 40, fontWeight: '900', marginLeft: 12 },
-  barBg: { height: 6, backgroundColor: '#334155', borderRadius: 99, marginBottom: 14, overflow: 'hidden' },
+  barBg: { height: 6, backgroundColor: '#2a2a2a', borderRadius: 99, marginBottom: 14, overflow: 'hidden' },
   barFill: { height: '100%', borderRadius: 99 },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center' },
-  verifiedBadge: { fontSize: 11, fontWeight: '700', backgroundColor: '#134e4a', color: '#2dd4bf', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
-  unverifiedBadge: { fontSize: 11, fontWeight: '700', backgroundColor: '#1e293b', color: '#475569', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99, borderWidth: 1, borderColor: '#334155' },
-  metaText: { fontSize: 12, color: '#64748b', fontWeight: '500' },
+  verifiedBadge: { fontSize: 11, fontWeight: '700', backgroundColor: '#2a2000', color: '#facc15', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
+  unverifiedBadge: { fontSize: 11, fontWeight: '700', backgroundColor: '#1c1c1c', color: '#555555', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99, borderWidth: 1, borderColor: '#2a2a2a' },
+  metaText: { fontSize: 12, color: '#888888', fontWeight: '500' },
   section: { marginBottom: 20 },
-  sectionLabel: { fontSize: 11, fontWeight: '800', color: '#475569', letterSpacing: 1, marginBottom: 12 },
+  sectionLabel: { fontSize: 11, fontWeight: '800', color: '#555555', letterSpacing: 1, marginBottom: 12 },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  badge: { fontSize: 13, fontWeight: '600', backgroundColor: '#0f2744', color: '#7dd3fc', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 99 },
+  badge: { fontSize: 13, fontWeight: '600', backgroundColor: '#1e1a00', color: '#facc15', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 99 },
   buttons: { flexDirection: 'row', gap: 10, marginBottom: 28 },
-  btn: { flex: 1, backgroundColor: '#0d9488', borderRadius: 12, padding: 14, alignItems: 'center', shadowColor: '#0d9488', shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  btnOutline: { flex: 1, borderRadius: 12, padding: 14, alignItems: 'center', borderWidth: 1.5, borderColor: '#334155' },
-  btnOutlineText: { color: '#94a3b8', fontWeight: '700', fontSize: 14 },
-  noReviews: { fontSize: 14, color: '#475569', fontWeight: '500' },
-  reviewCard: { backgroundColor: '#1e293b', borderRadius: 16, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: '#334155' },
+  btn: { flex: 1, backgroundColor: '#facc15', borderRadius: 12, padding: 14, alignItems: 'center', shadowColor: '#facc15', shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
+  btnText: { color: '#111111', fontWeight: '700', fontSize: 14 },
+  btnOutline: { flex: 1, borderRadius: 12, padding: 14, alignItems: 'center', borderWidth: 1.5, borderColor: '#2a2a2a' },
+  btnOutlineText: { color: '#aaaaaa', fontWeight: '700', fontSize: 14 },
+  noReviews: { fontSize: 14, color: '#555555', fontWeight: '500' },
+  reviewCard: { backgroundColor: '#1c1c1c', borderRadius: 16, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: '#2a2a2a' },
   reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  reviewStars: { fontSize: 15, color: '#f59e0b' },
-  reviewMeta: { fontSize: 11, color: '#94a3b8', fontWeight: '500' },
-  reviewRatingLabel: { fontSize: 12, fontWeight: '700', color: '#64748b', marginBottom: 6 },
-  reviewComment: { fontSize: 14, color: '#94a3b8', lineHeight: 21 },
+  reviewStars: { fontSize: 15, color: '#facc15' },
+  reviewMeta: { fontSize: 11, color: '#aaaaaa', fontWeight: '500' },
+  reviewRatingLabel: { fontSize: 12, fontWeight: '700', color: '#888888', marginBottom: 6 },
+  reviewComment: { fontSize: 14, color: '#aaaaaa', lineHeight: 21 },
 });

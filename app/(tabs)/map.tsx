@@ -24,9 +24,9 @@ type Bathroom = {
 };
 
 function getColor(score: number) {
-  if (score >= 4.5) return '#22c55e';
-  if (score >= 3.5) return '#f59e0b';
-  return '#f43f5e';
+  if (score >= 4.5) return 'rgba(250, 204, 21, 0.9)';
+  if (score >= 3.5) return 'rgba(250, 204, 21, 0.65)';
+  return 'rgba(250, 204, 21, 0.45)';
 }
 
 function getLabel(score: number) {
@@ -248,32 +248,32 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f172a' },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0f172a' },
-  loadingText: { marginTop: 12, fontSize: 14, color: '#64748b', fontWeight: '600' },
-  header: { backgroundColor: '#1e293b', padding: 20, paddingTop: 60, borderBottomWidth: 1, borderBottomColor: '#334155' },
-  logo: { fontSize: 26, fontWeight: '800', color: '#f8fafc' },
-  subtitle: { fontSize: 13, color: '#64748b', marginTop: 2 },
+  container: { flex: 1, backgroundColor: '#111111' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#111111' },
+  loadingText: { marginTop: 12, fontSize: 14, color: '#888888', fontWeight: '600' },
+  header: { backgroundColor: '#1c1c1c', padding: 20, paddingTop: 60, borderBottomWidth: 1, borderBottomColor: '#2a2a2a' },
+  logo: { fontSize: 26, fontWeight: '800', color: '#facc15' },
+  subtitle: { fontSize: 13, color: '#888888', marginTop: 2 },
   map: { flex: 1 },
   pinOuter: { borderRadius: 10, padding: 2.5, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 },
   pinInner: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   pinScore: { fontSize: 12, fontWeight: '900' },
-  attribution: { position: 'absolute', bottom: 8, left: 8, backgroundColor: 'rgba(15,23,42,0.8)', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
-  attributionText: { fontSize: 10, color: '#64748b' },
-  card: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#1e293b', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 36, borderTopWidth: 1, borderColor: '#334155', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 12, elevation: 8 },
+  attribution: { position: 'absolute', bottom: 8, left: 8, backgroundColor: 'rgba(17,17,17,0.8)', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
+  attributionText: { fontSize: 10, color: '#888888' },
+  card: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#1c1c1c', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 36, borderTopWidth: 1, borderColor: '#2a2a2a', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 12, elevation: 8 },
   cardTop: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 },
   cardName: { fontSize: 17, fontWeight: '800', color: '#f8fafc' },
   cardLabel: { fontSize: 13, fontWeight: '600', marginTop: 3 },
   scoreBox: { marginLeft: 12 },
   score: { fontSize: 18, fontWeight: '900' },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
-  verifiedBadge: { fontSize: 11, fontWeight: '700', backgroundColor: '#134e4a', color: '#2dd4bf', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
-  badge: { fontSize: 11, fontWeight: '600', backgroundColor: '#0f2744', color: '#7dd3fc', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
+  verifiedBadge: { fontSize: 11, fontWeight: '700', backgroundColor: '#2a2000', color: '#facc15', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
+  badge: { fontSize: 11, fontWeight: '600', backgroundColor: '#1e1a00', color: '#facc15', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
   buttons: { flexDirection: 'row', gap: 8 },
-  btn: { flex: 1, backgroundColor: '#0d9488', borderRadius: 10, padding: 12, alignItems: 'center' },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  btnOutline: { flex: 1, borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1.5, borderColor: '#334155' },
-  btnOutlineText: { color: '#94a3b8', fontWeight: '700', fontSize: 13 },
-  btnClose: { backgroundColor: '#334155', borderRadius: 10, padding: 12, alignItems: 'center', paddingHorizontal: 16 },
-  btnCloseText: { color: '#94a3b8', fontWeight: '700', fontSize: 13 },
+  btn: { flex: 1, backgroundColor: '#facc15', borderRadius: 10, padding: 12, alignItems: 'center' },
+  btnText: { color: '#111111', fontWeight: '700', fontSize: 13 },
+  btnOutline: { flex: 1, borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1.5, borderColor: '#2a2a2a' },
+  btnOutlineText: { color: '#aaaaaa', fontWeight: '700', fontSize: 13 },
+  btnClose: { backgroundColor: '#2a2a2a', borderRadius: 10, padding: 12, alignItems: 'center', paddingHorizontal: 16 },
+  btnCloseText: { color: '#aaaaaa', fontWeight: '700', fontSize: 13 },
 });
