@@ -1,9 +1,10 @@
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, getDocs } from 'firebase/firestore';
 import React, { useState } from 'react';
 import {
+  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -16,6 +17,7 @@ import {
   View,
 } from 'react-native';
 import { auth, db } from '../firebaseConfig';
+import { getDistanceMiles } from '../utils/distance';
 
 function AmenityToggle({ label, value, onValueChange }: { label: string, value: boolean, onValueChange: (v: boolean) => void }) {
   return (
@@ -27,7 +29,7 @@ function AmenityToggle({ label, value, onValueChange }: { label: string, value: 
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           onValueChange(v);
         }}
-        trackColor={{ false: '#334155', true: '#0d9488' }}
+        trackColor={{ false: '#2a2a2a', true: '#facc15' }}
         thumbColor='#fff'
       />
     </View>
@@ -76,6 +78,38 @@ export default function AddBathroomScreen() {
       latitude = loc.coords.latitude;
       longitude = loc.coords.longitude;
 
+      const snapshot = await getDocs(collection(db, 'bathrooms'));
+      const nearby = snapshot.docs
+        .map(d => ({ name: d.data().name, latitude: d.data().latitude, longitude: d.data().longitude }))
+        .find(b => getDistanceMiles(latitude, longitude, b.latitude, b.longitude) < 0.06);
+
+      if (nearby) {
+        setLoading(false);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        Alert.alert(
+          'Possible Duplicate',
+          `"${nearby.name}" is already listed nearby. Are you sure this is a different bathroom?`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Add Anyway', onPress: () => submitBathroom(latitude, longitude) },
+          ]
+        );
+        return;
+      }
+
+      await submitBathroom(latitude, longitude);
+    } catch (e: any) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      console.log('Add bathroom error:', e.code, e.message);
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function submitBathroom(latitude: number, longitude: number) {
+    setLoading(true);
+    try {
       await addDoc(collection(db, 'bathrooms'), {
         name: name.trim(),
         address: address.trim(),
