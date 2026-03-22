@@ -403,10 +403,10 @@ export default function HomeScreen() {
                     <Text style={styles.cardSub}>📍 {b.distance}  ·  ✓ {formatLastVerified(b.lastCleaned)}</Text>
                   </View>
                   <View style={styles.scoreBox}>
-                    <Text style={[styles.score, { color: b.cleanliness === 0 ? '#475569' : getColor(b.cleanliness) }]}>
+                    <Text style={[styles.score, { color: b.cleanliness === 0 ? '#888888' : getColor(b.cleanliness) }]}>
                       {b.cleanliness === 0 ? 'New' : renderStars(b.cleanliness)}
                     </Text>
-                    <Text style={[styles.scoreLabel, { color: b.cleanliness === 0 ? '#475569' : getColor(b.cleanliness) }]}>
+                    <Text style={[styles.scoreLabel, { color: b.cleanliness === 0 ? '#888888' : getColor(b.cleanliness) }]}>
                       {b.cleanliness === 0 ? 'Not yet rated' : `${getLabel(b.cleanliness)} · ${b.reviewCount || 0} reviews`}
                     </Text>
                   </View>
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
   filterMoreText: { fontSize: 11, fontWeight: '700', color: '#888888' },
   filterMoreTextActive: { color: '#111111' },
   filterPanel: { backgroundColor: '#1c1c1c', borderBottomWidth: 1, borderBottomColor: '#2a2a2a', padding: 16 },
-  filterPanelLabel: { fontSize: 11, fontWeight: '800', color: '#555555', marginBottom: 10, letterSpacing: 1 },
+  filterPanelLabel: { fontSize: 11, fontWeight: '800', color: '#888888', marginBottom: 10, letterSpacing: 1 },
   filterPillsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
   filterPillFull: { borderRadius: 99, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1.5, borderColor: '#2a2a2a', backgroundColor: '#111111' },
   filterPillFullText: { fontSize: 12, fontWeight: '700', color: '#888888' },
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
   cardSelected: { borderColor: '#facc15' },
   cardTop: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 },
   cardName: { fontSize: 15, fontWeight: '700', color: '#f8fafc' },
-  cardSub: { fontSize: 12, color: '#555555', marginTop: 3 },
+  cardSub: { fontSize: 12, color: '#888888', marginTop: 3 },
   scoreBox: { alignItems: 'flex-end', marginLeft: 12 },
   chevron: { fontSize: 20, color: '#facc15', marginLeft: 8, alignSelf: 'center' },
   score: { fontSize: 16, fontWeight: '900' },
