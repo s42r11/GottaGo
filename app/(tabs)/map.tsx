@@ -46,6 +46,7 @@ export default function MapScreen() {
   const [selected, setSelected] = useState<string | null>(null);
   const [bathrooms, setBathrooms] = useState<Bathroom[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tracksViewChanges, setTracksViewChanges] = useState(true);
   const mapRef = useRef<MapView>(null);
 
   useEffect(() => {
@@ -77,6 +78,7 @@ export default function MapScreen() {
   useFocusEffect(
     React.useCallback(() => {
       async function fetchBathrooms() {
+        setTracksViewChanges(true);
         try {
           const snapshot = await getDocs(collection(db, 'bathrooms'));
           const data = snapshot.docs.map(doc => ({
@@ -84,6 +86,7 @@ export default function MapScreen() {
             ...doc.data()
           })) as Bathroom[];
           setBathrooms(data);
+          setTimeout(() => setTracksViewChanges(false), 500);
           if (location) {
             setTimeout(() => {
               mapRef.current?.animateToRegion({
@@ -201,18 +204,26 @@ export default function MapScreen() {
           <Marker
             key={b.id}
             coordinate={{ latitude: b.latitude, longitude: b.longitude }}
+            tracksViewChanges={tracksViewChanges}
+
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               setSelected(b.id);
             }}
           >
-            <View style={[styles.pinOuter, { backgroundColor: b.cleanliness === 0 ? '#475569' : getColor(b.cleanliness) }]}>
-              <View style={[styles.pinInner, { backgroundColor: b.cleanliness === 0 ? '#1e293b' : '#0f172a' }]}>
-                <Text style={[styles.pinScore, { color: b.cleanliness === 0 ? '#475569' : getColor(b.cleanliness) }]}>
-                  {b.cleanliness === 0 ? '★ New' : b.cleanliness.toFixed(1)}
-                </Text>
+            {b.cleanliness === 0 ? (
+              <View style={styles.pinDotOuter}>
+                <View style={styles.pinDotInner} />
               </View>
-            </View>
+            ) : (
+              <View style={[styles.pinOuter, { backgroundColor: getColor(b.cleanliness) }]}>
+                <View style={[styles.pinInner, { backgroundColor: '#0f172a' }]}>
+                  <Text style={[styles.pinScore, { color: getColor(b.cleanliness) }]}>
+                    {b.cleanliness.toFixed(1)}
+                  </Text>
+                </View>
+              </View>
+            )}
           </Marker>
         ))}
       </MapView>
@@ -295,7 +306,9 @@ const styles = StyleSheet.create({
   map: { flex: 1 },
   pinOuter: { borderRadius: 10, padding: 2.5, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 },
   pinInner: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  pinScore: { fontSize: 12, fontWeight: '900' },
+  pinScore: { fontSize: 11, fontWeight: '900' },
+  pinDotOuter: { width: 18, height: 18, borderRadius: 9, backgroundColor: '#888888', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 },
+  pinDotInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#1c1c1c' },
   attribution: { position: 'absolute', bottom: 8, left: 8, backgroundColor: 'rgba(17,17,17,0.8)', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
   attributionText: { fontSize: 10, color: '#888888' },
   card: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#1c1c1c', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 36, borderTopWidth: 1, borderColor: '#2a2a2a', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 12, elevation: 8 },
