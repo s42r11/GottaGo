@@ -266,6 +266,14 @@ export async function fetchAndSeedNearbyBathrooms(latitude: number, longitude: n
 - Review history on detail screen (masked email: stev••••)
 - Content reporting (report listing + report review → Firestore reports collection)
 - Return-to-destination login flow (report → sign in → back to detail)
+- Full app retheme to black/yellow (#111111 bg, #facc15 accent)
+- EAS build setup + Google Maps API key secured via EAS secrets
+- Auth-gated actions show Alert popup instead of silent redirect
+- Pull to refresh on detail screen
+- Near me auto-zoom on map screen
+- Duplicate detection when adding a bathroom
+- Address field optional with auto-reverse-geocoding fallback
+- GPS + Firestore fetch parallelized on add bathroom submit
 
 ---
 
@@ -290,14 +298,14 @@ export async function fetchAndSeedNearbyBathrooms(latitude: number, longitude: n
 - Search bar on list screen — **20 min**
 - Last N days filter on list screen — **20 min**
 - "Is this bathroom still here?" confirm button on detail screen — **20 min**
-- Duplicate detection when adding a bathroom — **20 min**
+- ~~Duplicate detection when adding a bathroom~~ ✓
 - Sort toggle on detail screen reviews (newest vs highest rated) — **15 min**
 
 ### V4 Polish:
-- Pull to refresh on detail screen — **10 min**
-- Address tap opens Maps on detail screen — **5 min**
-- Chevron indicator on list cards — **5 min**
-- Near me auto-zoom on map screen — **15 min**
+- ~~Pull to refresh on detail screen~~ ✓
+- ~~Address tap opens Maps on detail screen~~ ✓
+- ~~Chevron indicator on list cards~~ ✓
+- ~~Near me auto-zoom on map screen~~ ✓
 
 ### Future:
 - User profiles with review history
