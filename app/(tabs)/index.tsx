@@ -86,22 +86,12 @@ function SkeletonCard() {
   );
 }
 
-function AnimatedBar({ cleanliness }: { cleanliness: number }) {
-  const anim = useRef(new Animated.Value(0)).current;
-  const targetWidth = cleanliness === 0 ? 0 : (Math.round(cleanliness) / 5) * 100;
-
-  useEffect(() => {
-    Animated.timing(anim, {
-      toValue: targetWidth,
-      duration: 600,
-      useNativeDriver: false,
-    }).start();
-  }, [targetWidth]);
-
+function ScoreBar({ cleanliness }: { cleanliness: number }) {
+  const width = cleanliness === 0 ? 0 : (Math.round(cleanliness) / 5) * 100;
   return (
     <View style={styles.barBg}>
-      <Animated.View style={[styles.barFill, {
-        width: anim.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'] }),
+      <View style={[styles.barFill, {
+        width: `${width}%`,
         backgroundColor: cleanliness === 0 ? '#1e293b' : getColor(cleanliness),
       }]} />
     </View>
@@ -190,6 +180,7 @@ export default function HomeScreen() {
   });
 
   const filtered = bathroomsWithDistance
+    .filter(b => userLocation ? b.distanceMiles <= 5 : true)
     .filter(b => {
       if (filters.length === 0) return true;
       return filters.every(f => {
@@ -222,7 +213,7 @@ export default function HomeScreen() {
         <View>
           <Text style={styles.logo}>🚽 GottaGo</Text>
           <Text style={styles.subtitle}>
-            {loading ? 'Loading...' : `Restrooms near you · ${filtered.length} found`}
+            {loading ? 'Loading...' : `Restrooms within 5 miles · ${filtered.length} found`}
           </Text>
         </View>
         <View style={styles.headerButtons}>
@@ -413,7 +404,7 @@ export default function HomeScreen() {
                   <Text style={styles.chevron}>›</Text>
                 </View>
 
-                <AnimatedBar cleanliness={b.cleanliness} />
+                <ScoreBar cleanliness={b.cleanliness} />
 
                 <View style={styles.badges}>
                   {b.verified && <Text style={styles.verifiedBadge}>✓ Verified</Text>}
