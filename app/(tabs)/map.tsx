@@ -24,9 +24,9 @@ type Bathroom = {
 };
 
 function getColor(score: number) {
-  if (score >= 4.5) return 'rgba(250, 204, 21, 0.9)';
-  if (score >= 3.5) return 'rgba(250, 204, 21, 0.65)';
-  return 'rgba(250, 204, 21, 0.45)';
+  if (score >= 4.5) return 'rgba(245, 234, 66, 0.9)';
+  if (score >= 3.5) return 'rgba(245, 234, 66, 0.65)';
+  return 'rgba(245, 234, 66, 0.45)';
 }
 
 function getLabel(score: number) {
@@ -299,9 +299,9 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#111111' },
   loadingText: { marginTop: 12, fontSize: 14, color: '#888888', fontWeight: '600' },
   header: { backgroundColor: '#1c1c1c', padding: 20, paddingTop: 60, borderBottomWidth: 1, borderBottomColor: '#2a2a2a', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  nearMeBtn: { backgroundColor: '#facc15', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
+  nearMeBtn: { backgroundColor: '#f5ea42', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
   nearMeBtnText: { fontSize: 12, fontWeight: '700', color: '#111111' },
-  logo: { fontSize: 26, fontWeight: '800', color: '#facc15' },
+  logo: { fontSize: 26, fontWeight: '800', color: '#f5ea42' },
   subtitle: { fontSize: 13, color: '#888888', marginTop: 2 },
   map: { flex: 1 },
   pinOuter: { borderRadius: 10, padding: 2.5, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 },
@@ -318,10 +318,10 @@ const styles = StyleSheet.create({
   scoreBox: { marginLeft: 12 },
   score: { fontSize: 18, fontWeight: '900' },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
-  verifiedBadge: { fontSize: 11, fontWeight: '700', backgroundColor: '#2a2000', color: '#facc15', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
-  badge: { fontSize: 11, fontWeight: '600', backgroundColor: '#1e1a00', color: '#facc15', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
+  verifiedBadge: { fontSize: 11, fontWeight: '700', backgroundColor: '#2a2000', color: '#f5ea42', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
+  badge: { fontSize: 11, fontWeight: '600', backgroundColor: '#1e1a00', color: '#f5ea42', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
   buttons: { flexDirection: 'row', gap: 8 },
-  btn: { flex: 1, backgroundColor: '#facc15', borderRadius: 10, padding: 12, alignItems: 'center' },
+  btn: { flex: 1, backgroundColor: '#f5ea42', borderRadius: 10, padding: 12, alignItems: 'center' },
   btnText: { color: '#111111', fontWeight: '700', fontSize: 13 },
   btnOutline: { flex: 1, borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1.5, borderColor: '#2a2a2a' },
   btnOutlineText: { color: '#aaaaaa', fontWeight: '700', fontSize: 13 },

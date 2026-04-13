@@ -102,7 +102,7 @@ export default function ReviewScreen() {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 setRating(i);
               }}>
-                <Text style={[styles.star, { color: i <= rating ? '#f59e0b' : '#334155' }]}>★</Text>
+                <Text style={[styles.star, { color: i <= rating ? '#f5ea42' : '#334155' }]}>★</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   inner: { padding: 24 },
   header: { marginBottom: 16, marginTop: 40 },
   backBtn: { alignSelf: 'flex-start' },
-  backText: { fontSize: 15, color: '#facc15', fontWeight: '600' },
+  backText: { fontSize: 15, color: '#f5ea42', fontWeight: '600' },
   title: { fontSize: 28, fontWeight: '900', color: '#f8fafc', marginBottom: 12 },
   locationPill: { backgroundColor: '#1c1c1c', borderRadius: 99, paddingHorizontal: 16, paddingVertical: 8, alignSelf: 'flex-start', marginBottom: 24, borderWidth: 1, borderColor: '#2a2a2a' },
   locationText: { fontSize: 13, color: '#aaaaaa', fontWeight: '600' },
@@ -176,13 +176,13 @@ const styles = StyleSheet.create({
   starsLabel: { fontSize: 16, fontWeight: '700', color: '#f8fafc', marginBottom: 16 },
   stars: { flexDirection: 'row', gap: 8, marginBottom: 8 },
   star: { fontSize: 44 },
-  starLabel: { fontSize: 16, fontWeight: '700', color: '#facc15', marginTop: 4 },
+  starLabel: { fontSize: 16, fontWeight: '700', color: '#f5ea42', marginTop: 4 },
   commentCard: { backgroundColor: '#1c1c1c', borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#2a2a2a' },
   commentLabel: { fontSize: 14, fontWeight: '700', color: '#aaaaaa', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 },
   input: { backgroundColor: '#111111', borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 14, fontSize: 15, color: '#f8fafc', minHeight: 100 },
   errorBox: { backgroundColor: '#450a0a', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#7f1d1d' },
   errorText: { color: '#fca5a5', fontSize: 13, fontWeight: '600' },
-  btn: { backgroundColor: '#facc15', borderRadius: 14, padding: 16, alignItems: 'center', marginBottom: 40, shadowColor: '#facc15', shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 },
+  btn: { backgroundColor: '#f5ea42', borderRadius: 14, padding: 16, alignItems: 'center', marginBottom: 40, shadowColor: '#f5ea42', shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 },
   btnDisabled: { backgroundColor: '#2a2a2a', shadowOpacity: 0 },
   btnText: { color: '#111111', fontWeight: '800', fontSize: 16 },
 });

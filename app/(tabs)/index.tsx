@@ -27,9 +27,9 @@ type Bathroom = {
 };
 
 function getColor(score: number) {
-  if (score >= 4.5) return 'rgba(250, 204, 21, 0.9)';
-  if (score >= 3.5) return 'rgba(250, 204, 21, 0.65)';
-  return 'rgba(250, 204, 21, 0.45)';
+  if (score >= 4.5) return 'rgba(245, 234, 66, 0.9)';
+  if (score >= 3.5) return 'rgba(245, 234, 66, 0.65)';
+  return 'rgba(245, 234, 66, 0.45)';
 }
 
 function getLabel(score: number) {
@@ -427,24 +427,24 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#111111' },
   loadingText: { marginTop: 12, fontSize: 14, color: '#888888', fontWeight: '600' },
   header: { backgroundColor: '#1c1c1c', padding: 20, paddingTop: 60, borderBottomWidth: 1, borderBottomColor: '#2a2a2a', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  logo: { fontSize: 26, fontWeight: '800', color: '#facc15' },
+  logo: { fontSize: 26, fontWeight: '800', color: '#f5ea42' },
   subtitle: { fontSize: 13, color: '#888888', marginTop: 2 },
   headerButtons: { flexDirection: 'row', gap: 8 },
-  addBtn: { backgroundColor: '#facc15', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
+  addBtn: { backgroundColor: '#f5ea42', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
   addBtnText: { fontSize: 13, fontWeight: '700', color: '#111111' },
   signOutBtn: { backgroundColor: '#2a2a2a', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
   signOutText: { fontSize: 13, fontWeight: '700', color: '#aaaaaa' },
   controlRow: { backgroundColor: '#1c1c1c', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#2a2a2a', gap: 6 },
   sortPill: { borderRadius: 99, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1.5, borderColor: '#2a2a2a', backgroundColor: '#111111' },
-  sortPillActive: { backgroundColor: '#facc15', borderColor: '#facc15' },
+  sortPillActive: { backgroundColor: '#f5ea42', borderColor: '#f5ea42' },
   sortPillText: { fontSize: 11, fontWeight: '700', color: '#888888' },
   sortPillTextActive: { color: '#111111' },
   divider: { width: 1, height: 20, backgroundColor: '#2a2a2a', marginHorizontal: 2 },
   filterPill: { borderRadius: 99, paddingHorizontal: 9, paddingVertical: 6, borderWidth: 1.5, borderColor: '#2a2a2a', backgroundColor: '#111111' },
-  filterPillActive: { backgroundColor: '#facc15', borderColor: '#facc15' },
+  filterPillActive: { backgroundColor: '#f5ea42', borderColor: '#f5ea42' },
   filterPillIcon: { fontSize: 13 },
   filterMoreBtn: { borderRadius: 99, paddingHorizontal: 9, paddingVertical: 6, borderWidth: 1.5, borderColor: '#2a2a2a', backgroundColor: '#111111', marginLeft: 'auto' },
-  filterMoreBtnActive: { backgroundColor: '#facc15', borderColor: '#facc15' },
+  filterMoreBtnActive: { backgroundColor: '#f5ea42', borderColor: '#f5ea42' },
   filterMoreText: { fontSize: 11, fontWeight: '700', color: '#888888' },
   filterMoreTextActive: { color: '#111111' },
   filterPanel: { backgroundColor: '#1c1c1c', borderBottomWidth: 1, borderBottomColor: '#2a2a2a', padding: 16 },
@@ -468,24 +468,24 @@ const styles = StyleSheet.create({
   emptyIcon: { fontSize: 56, marginBottom: 16 },
   emptyText: { fontSize: 18, fontWeight: '700', color: '#f8fafc', marginBottom: 8 },
   emptySubtext: { fontSize: 14, color: '#888888', marginBottom: 24, textAlign: 'center' },
-  emptyBtn: { backgroundColor: '#facc15', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 14 },
+  emptyBtn: { backgroundColor: '#f5ea42', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 14 },
   emptyBtnText: { color: '#111111', fontWeight: '700', fontSize: 15 },
   card: { backgroundColor: '#1c1c1c', borderRadius: 16, padding: 16, borderWidth: 1.5, borderColor: '#2a2a2a' },
-  cardSelected: { borderColor: '#facc15' },
+  cardSelected: { borderColor: '#f5ea42' },
   cardTop: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 },
   cardName: { fontSize: 15, fontWeight: '700', color: '#f8fafc' },
   cardSub: { fontSize: 12, color: '#888888', marginTop: 3 },
   scoreBox: { alignItems: 'flex-end', marginLeft: 12 },
-  chevron: { fontSize: 20, color: '#facc15', marginLeft: 8, alignSelf: 'center' },
+  chevron: { fontSize: 20, color: '#f5ea42', marginLeft: 8, alignSelf: 'center' },
   score: { fontSize: 16, fontWeight: '900' },
   scoreLabel: { fontSize: 10, fontWeight: '700' },
   barBg: { height: 6, backgroundColor: '#2a2a2a', borderRadius: 99, marginBottom: 10, overflow: 'hidden' },
   barFill: { height: '100%', borderRadius: 99 },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  verifiedBadge: { fontSize: 11, fontWeight: '700', backgroundColor: '#2a2000', color: '#facc15', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
-  badge: { fontSize: 11, fontWeight: '600', backgroundColor: '#1e1a00', color: '#facc15', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
+  verifiedBadge: { fontSize: 11, fontWeight: '700', backgroundColor: '#2a2000', color: '#f5ea42', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
+  badge: { fontSize: 11, fontWeight: '600', backgroundColor: '#1e1a00', color: '#f5ea42', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
   detail: { marginTop: 14, flexDirection: 'row', gap: 8 },
-  btn: { flex: 1, backgroundColor: '#facc15', borderRadius: 10, padding: 12, alignItems: 'center' },
+  btn: { flex: 1, backgroundColor: '#f5ea42', borderRadius: 10, padding: 12, alignItems: 'center' },
   btnText: { color: '#111111', fontWeight: '700', fontSize: 13 },
   btnOutline: { flex: 1, borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1.5, borderColor: '#2a2a2a' },
   btnOutlineText: { color: '#aaaaaa', fontWeight: '700', fontSize: 13 },

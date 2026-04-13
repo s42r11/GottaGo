@@ -4,6 +4,7 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'fire
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -68,14 +69,11 @@ export default function LoginScreen() {
 
         {/* Hero area */}
         <View style={styles.hero}>
-          <View style={styles.kawaii}>
-            <Text style={styles.sparkleTopLeft}>✨</Text>
-            <Text style={styles.sparkleTopRight}>⭐</Text>
-            <Text style={styles.mainEmoji}>🚽</Text>
-            <Text style={styles.sparkleBottomLeft}>💧</Text>
-            <Text style={styles.sparkleBottomRight}>✨</Text>
-          </View>
-          <Text style={styles.appName}>GottaGo</Text>
+          <Image
+            source={require('../assets/images/GottaGo_logo_cropped.png')}
+            style={styles.heroIcon}
+            resizeMode="contain"
+          />
           <Text style={styles.tagline}>When nature calls, we answer 🌟</Text>
         </View>
 
@@ -168,19 +166,14 @@ const styles = StyleSheet.create({
   },
   gradientBottom: {
     position: 'absolute', bottom: 0, left: 0, right: 0, height: 500,
-    backgroundColor: '#facc15',
+    backgroundColor: '#f5ea42',
     borderTopLeftRadius: 999,
     borderTopRightRadius: 999,
     opacity: 0.15,
   },
-  hero: { alignItems: 'center', paddingTop: 80, paddingBottom: 32, zIndex: 1 },
-  kawaii: { width: 140, height: 140, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  mainEmoji: { fontSize: 80 },
-  sparkleTopLeft: { position: 'absolute', top: 0, left: 8, fontSize: 24 },
-  sparkleTopRight: { position: 'absolute', top: 4, right: 8, fontSize: 20 },
-  sparkleBottomLeft: { position: 'absolute', bottom: 8, left: 4, fontSize: 20 },
-  sparkleBottomRight: { position: 'absolute', bottom: 0, right: 12, fontSize: 18 },
-  appName: { fontSize: 42, fontWeight: '900', color: '#facc15', letterSpacing: 2, marginBottom: 8 },
+  hero: { alignItems: 'center', paddingTop: '25%', paddingBottom: 120, zIndex: 1 },
+  heroIcon: { width: 300, height: 120, marginBottom: 16 },
+  appName: { fontSize: 42, fontWeight: '900', color: '#f5ea42', letterSpacing: 2, marginBottom: 8 },
   tagline: { fontSize: 15, color: '#aaaaaa', fontWeight: '500', textAlign: 'center' },
   card: {
     backgroundColor: '#1c1c1c',
@@ -211,12 +204,12 @@ const styles = StyleSheet.create({
   errorBox: { backgroundColor: '#450a0a', borderRadius: 10, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#7f1d1d' },
   errorText: { color: '#fca5a5', fontSize: 13, fontWeight: '600' },
   btn: {
-    backgroundColor: '#facc15',
+    backgroundColor: '#f5ea42',
     borderRadius: 14,
     padding: 16,
     alignItems: 'center',
     marginBottom: 12,
-    shadowColor: '#facc15',
+    shadowColor: '#f5ea42',
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 6,
@@ -224,7 +217,7 @@ const styles = StyleSheet.create({
   btnText: { color: '#111111', fontWeight: '800', fontSize: 16 },
   switchBtn: { alignItems: 'center', marginBottom: 20 },
   switchText: { fontSize: 14, color: '#888888', fontWeight: '500' },
-  switchHighlight: { color: '#facc15', fontWeight: '700' },
+  switchHighlight: { color: '#f5ea42', fontWeight: '700' },
   divider: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   dividerLine: { flex: 1, height: 1, backgroundColor: '#2a2a2a' },
   dividerText: { color: '#555555', fontSize: 13, paddingHorizontal: 12, fontWeight: '600' },

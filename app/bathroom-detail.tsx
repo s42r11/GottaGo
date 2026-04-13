@@ -46,9 +46,9 @@ type Review = {
 };
 
 function getColor(score: number) {
-  if (score >= 4.5) return 'rgba(250, 204, 21, 0.9)';
-  if (score >= 3.5) return 'rgba(250, 204, 21, 0.65)';
-  return 'rgba(250, 204, 21, 0.45)';
+  if (score >= 4.5) return 'rgba(245, 234, 66, 0.9)';
+  if (score >= 3.5) return 'rgba(245, 234, 66, 0.65)';
+  return 'rgba(245, 234, 66, 0.45)';
 }
 
 function getLabel(score: number) {
@@ -187,7 +187,7 @@ export default function BathroomDetailScreen() {
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.inner}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#facc15" colors={['#facc15']} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f5ea42" colors={['#f5ea42']} />}
     >
 
       {/* Header */}
@@ -344,13 +344,13 @@ const styles = StyleSheet.create({
   loadingText: { color: '#888888', fontSize: 15, fontWeight: '600' },
   header: { marginTop: 40, marginBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   backBtn: { alignSelf: 'flex-start' },
-  backText: { fontSize: 15, color: '#facc15', fontWeight: '600' },
+  backText: { fontSize: 15, color: '#f5ea42', fontWeight: '600' },
   reportBtn: { alignSelf: 'flex-start' },
   reportText: { fontSize: 12, color: '#555555', fontWeight: '600' },
   reportReviewBtn: { alignSelf: 'flex-end', marginTop: 8 },
   reportReviewText: { fontSize: 11, color: '#555555', fontWeight: '600' },
   name: { fontSize: 26, fontWeight: '900', color: '#f8fafc', marginBottom: 6 },
-  address: { fontSize: 14, color: '#facc15', marginBottom: 2 },
+  address: { fontSize: 14, color: '#f5ea42', marginBottom: 2 },
   addressLink: { textDecorationLine: 'underline' },
   floor: { fontSize: 13, color: '#555555', marginBottom: 20 },
   scoreCard: { backgroundColor: '#1c1c1c', borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#2a2a2a' },
@@ -361,22 +361,22 @@ const styles = StyleSheet.create({
   barBg: { height: 6, backgroundColor: '#2a2a2a', borderRadius: 99, marginBottom: 14, overflow: 'hidden' },
   barFill: { height: '100%', borderRadius: 99 },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center' },
-  verifiedBadge: { fontSize: 11, fontWeight: '700', backgroundColor: '#2a2000', color: '#facc15', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
+  verifiedBadge: { fontSize: 11, fontWeight: '700', backgroundColor: '#2a2000', color: '#f5ea42', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
   unverifiedBadge: { fontSize: 11, fontWeight: '700', backgroundColor: '#1c1c1c', color: '#555555', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99, borderWidth: 1, borderColor: '#2a2a2a' },
   metaText: { fontSize: 12, color: '#888888', fontWeight: '500' },
   section: { marginBottom: 20 },
   sectionLabel: { fontSize: 11, fontWeight: '800', color: '#555555', letterSpacing: 1, marginBottom: 12 },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  badge: { fontSize: 13, fontWeight: '600', backgroundColor: '#1e1a00', color: '#facc15', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 99 },
+  badge: { fontSize: 13, fontWeight: '600', backgroundColor: '#1e1a00', color: '#f5ea42', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 99 },
   buttons: { flexDirection: 'row', gap: 10, marginBottom: 28 },
-  btn: { flex: 1, backgroundColor: '#facc15', borderRadius: 12, padding: 14, alignItems: 'center', shadowColor: '#facc15', shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
+  btn: { flex: 1, backgroundColor: '#f5ea42', borderRadius: 12, padding: 14, alignItems: 'center', shadowColor: '#f5ea42', shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
   btnText: { color: '#111111', fontWeight: '700', fontSize: 14 },
   btnOutline: { flex: 1, borderRadius: 12, padding: 14, alignItems: 'center', borderWidth: 1.5, borderColor: '#2a2a2a' },
   btnOutlineText: { color: '#aaaaaa', fontWeight: '700', fontSize: 14 },
   noReviews: { fontSize: 14, color: '#555555', fontWeight: '500' },
   reviewCard: { backgroundColor: '#1c1c1c', borderRadius: 16, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: '#2a2a2a' },
   reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  reviewStars: { fontSize: 15, color: '#facc15' },
+  reviewStars: { fontSize: 15, color: '#f5ea42' },
   reviewMeta: { fontSize: 11, color: '#aaaaaa', fontWeight: '500' },
   reviewRatingLabel: { fontSize: 12, fontWeight: '700', color: '#888888', marginBottom: 6 },
   reviewComment: { fontSize: 14, color: '#aaaaaa', lineHeight: 21 },

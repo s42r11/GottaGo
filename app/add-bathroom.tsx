@@ -29,7 +29,7 @@ function AmenityToggle({ label, value, onValueChange }: { label: string, value: 
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           onValueChange(v);
         }}
-        trackColor={{ false: '#2a2a2a', true: '#facc15' }}
+        trackColor={{ false: '#2a2a2a', true: '#f5ea42' }}
         thumbColor='#fff'
       />
     </View>
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   inner: { padding: 24 },
   header: { marginBottom: 16, marginTop: 40 },
   backBtn: { alignSelf: 'flex-start' },
-  backText: { fontSize: 15, color: '#facc15', fontWeight: '600' },
+  backText: { fontSize: 15, color: '#f5ea42', fontWeight: '600' },
   title: { fontSize: 28, fontWeight: '900', color: '#f8fafc', marginBottom: 4 },
   subtitle: { fontSize: 15, color: '#888888', marginBottom: 24 },
   card: { backgroundColor: '#1c1c1c', borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#2a2a2a' },
@@ -247,9 +247,9 @@ const styles = StyleSheet.create({
   toggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#2a2a2a' },
   toggleLabel: { fontSize: 15, color: '#f8fafc', fontWeight: '500' },
   infoBox: { backgroundColor: '#1e1a00', borderRadius: 14, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: '#3a3000' },
-  infoText: { fontSize: 13, color: '#facc15', fontWeight: '500', lineHeight: 20 },
+  infoText: { fontSize: 13, color: '#f5ea42', fontWeight: '500', lineHeight: 20 },
   errorBox: { backgroundColor: '#450a0a', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#7f1d1d' },
   errorText: { color: '#fca5a5', fontSize: 13, fontWeight: '600' },
-  btn: { backgroundColor: '#facc15', borderRadius: 14, padding: 16, alignItems: 'center', marginBottom: 40, shadowColor: '#facc15', shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 },
+  btn: { backgroundColor: '#f5ea42', borderRadius: 14, padding: 16, alignItems: 'center', marginBottom: 40, shadowColor: '#f5ea42', shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 },
   btnText: { color: '#111111', fontWeight: '800', fontSize: 16 },
 });
