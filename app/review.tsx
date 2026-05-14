@@ -133,12 +133,12 @@ export default function ReviewScreen() {
         )}
 
         <TouchableOpacity
-          style={[styles.btn, rating === 0 && styles.btnDisabled]}
+          style={styles.btn}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             handleSubmit();
           }}
-          disabled={loading || rating === 0}>
+          disabled={loading}>
           {loading
             ? <ActivityIndicator color="#fff" />
             : <Text style={styles.btnText}>Submit Review</Text>
@@ -183,6 +183,6 @@ const styles = StyleSheet.create({
   errorBox: { backgroundColor: '#450a0a', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#7f1d1d' },
   errorText: { color: '#fca5a5', fontSize: 13, fontWeight: '600' },
   btn: { backgroundColor: '#f5ea42', borderRadius: 14, padding: 16, alignItems: 'center', marginBottom: 40, shadowColor: '#f5ea42', shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 },
-  btnDisabled: { backgroundColor: '#2a2a2a', shadowOpacity: 0 },
+
   btnText: { color: '#111111', fontWeight: '800', fontSize: 16 },
 });
