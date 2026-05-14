@@ -24,7 +24,7 @@ module.exports = {
       },
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
-      package: "com.anonymous.GottaGo",
+      package: "com.gottago.gottagoapp",
     },
     web: {
       output: "static",
@@ -36,7 +36,7 @@ module.exports = {
         "expo-splash-screen",
         {
           image: "./assets/images/splash-icon.png",
-          imageWidth: 400,
+          imageWidth: 250,
           resizeMode: "contain",
           backgroundColor: "#f5ea42",
           dark: {
