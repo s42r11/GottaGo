@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Delete Account — GottaGo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #111111;
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: #1c1c1c;
+      border: 1px solid #2a2a2a;
+      border-radius: 20px;
+      padding: 40px 36px;
+      max-width: 480px;
+      width: 100%;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .emoji {
+      font-size: 52px;
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    .app-name {
+      font-size: 28px;
+      font-weight: 900;
+      color: #f5ea42;
+      letter-spacing: 1px;
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-top: 6px;
+    }
+
+    .info-box {
+      background: #111111;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 28px;
+    }
+
+    .info-box p {
+      font-size: 14px;
+      color: #aaaaaa;
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+
+    .info-box p:last-child { margin-bottom: 0; }
+
+    .info-box ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .info-box ul li {
+      font-size: 14px;
+      color: #aaaaaa;
+      padding: 4px 0;
+      padding-left: 20px;
+      position: relative;
+    }
+
+    .info-box ul li::before {
+      content: "•";
+      color: #f5ea42;
+      position: absolute;
+      left: 6px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: #888888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    input[type="email"] {
+      width: 100%;
+      background: #111111;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 16px;
+      color: #f8fafc;
+      outline: none;
+      margin-bottom: 20px;
+      transition: border-color 0.2s;
+    }
+
+    input[type="email"]:focus {
+      border-color: #f5ea42;
+    }
+
+    input[type="email"]::placeholder {
+      color: #555555;
+    }
+
+    button {
+      width: 100%;
+      background: #f5ea42;
+      color: #111111;
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    button:hover { opacity: 0.88; }
+    button:active { opacity: 0.75; }
+
+    .note {
+      text-align: center;
+      font-size: 12px;
+      color: #555555;
+      margin-top: 20px;
+      line-height: 1.5;
+    }
+
+    .footer {
+      margin-top: 32px;
+      font-size: 12px;
+      color: #444444;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <span class="emoji">🚽</span>
+      <div class="app-name">GottaGo</div>
+      <h1>Delete My Account</h1>
+    </div>
+
+    <div class="info-box">
+      <p>Submitting this form will permanently delete:</p>
+      <ul>
+        <li>Your GottaGo account and login credentials</li>
+        <li>All reviews you have submitted</li>
+        <li>Any bathrooms you added to the community map</li>
+      </ul>
+      <p style="margin-top: 12px;">Deletion is permanent and cannot be undone. Requests are processed within 30 days.</p>
+    </div>
+
+    <form id="deleteForm">
+      <label for="email">Email address on your account</label>
+      <input
+        type="email"
+        id="email"
+        name="email"
+        placeholder="you@example.com"
+        required
+        autocomplete="email"
+      />
+      <button type="submit">Submit Deletion Request</button>
+    </form>
+
+    <p class="note">
+      You'll be prompted to open your email app to send the request.<br />
+      We'll confirm deletion once your account has been removed.
+    </p>
+  </div>
+
+  <p class="footer">&copy; GottaGo. All rights reserved.</p>
+
+  <script>
+    document.getElementById('deleteForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      if (!email) return;
+
+      const subject = encodeURIComponent('GottaGo Account Deletion Request');
+      const body = encodeURIComponent(
+        'Hi,\n\nI would like to permanently delete my GottaGo account and all associated data.\n\nAccount email: ' +
+        email +
+        '\n\nPlease confirm once my account and data have been removed.\n\nThank you.'
+      );
+
+      window.location.href = 'mailto:s42r11@hotmail.com?subject=' + subject + '&body=' + body;
+    });
+  </script>
+</body>
+</html>
