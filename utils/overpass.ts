@@ -39,27 +39,33 @@ async function reverseGeocode(latitude: number, longitude: number): Promise<stri
 export async function fetchAndSeedNearbyBathrooms(latitude: number, longitude: number) {
   try {
     console.log('Fetching OSM bathrooms near:', latitude, longitude);
-    const radius = 5000;
-    const overpassQuery = `
-      [out:json][timeout:25];
-      (
-        node["amenity"="toilets"](around:${radius},${latitude},${longitude});
-        node["amenity"="restroom"](around:${radius},${latitude},${longitude});
-        node["amenity"="bathroom"](around:${radius},${latitude},${longitude});
-      );
-      out body;
-    `;
+    const overpassQuery = `[out:json][timeout:30];node["amenity"="toilets"](around:3000,${latitude},${longitude});out body;`;
 
-    const response = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: overpassQuery,
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 35000);
 
-    console.log('Overpass response status:', response.status);
-    if (!response.ok) {
-      console.log('Overpass response not ok:', response.status, response.statusText);
-      return;
+    let response: Response | null = null;
+    try {
+      const r = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+          'User-Agent': 'GottaGo/1.0',
+        },
+        body: `data=${encodeURIComponent(overpassQuery)}`,
+      });
+      clearTimeout(timeoutId);
+      console.log('Overpass response status:', r.status);
+      if (r.ok) response = r;
+      else console.log('Overpass response not ok:', r.status, r.statusText);
+    } catch (e) {
+      clearTimeout(timeoutId);
+      console.log('Overpass fetch failed:', e instanceof Error ? e.message : String(e));
     }
+
+    if (!response) return;
 
     const data = await response.json();
     const elements: OverpassBathroom[] = data.elements || [];
@@ -114,6 +120,6 @@ export async function fetchAndSeedNearbyBathrooms(latitude: number, longitude: n
 
     console.log(`OSM: found ${elements.length} bathrooms, added ${added} new ones`);
   } catch (error) {
-    console.log('Overpass API error:', JSON.stringify(error));
+    console.log('Overpass API error:', error instanceof Error ? `${error.name}: ${error.message}` : String(error));
   }
 }
