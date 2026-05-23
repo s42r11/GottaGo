@@ -49,6 +49,7 @@ export default function MapScreen() {
   const [tracksViewChanges, setTracksViewChanges] = useState(true);
   const mapRef = useRef<MapView>(null);
   const hasSeededRef = useRef(false);
+  const hasInitializedMapRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,7 +91,8 @@ export default function MapScreen() {
           })) as Bathroom[];
           setBathrooms(data);
           setTimeout(() => setTracksViewChanges(false), 500);
-          if (location) {
+          if (location && !hasInitializedMapRef.current) {
+            hasInitializedMapRef.current = true;
             setTimeout(() => {
               mapRef.current?.animateToRegion({
                 latitude: location.coords.latitude,
