@@ -48,32 +48,35 @@ export default function MapScreen() {
   const [loading, setLoading] = useState(true);
   const [tracksViewChanges, setTracksViewChanges] = useState(true);
   const mapRef = useRef<MapView>(null);
+  const hasSeededRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        if (!cancelled) setErrorMsg('Permission to access location was denied');
-        return;
-      }
-      const lastKnown = await Location.getLastKnownPositionAsync({});
-      if (lastKnown && !cancelled) {
-        setLocation(lastKnown);
-      }
-      const current = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      if (!cancelled) {
-        setLocation(current);
-        await fetchAndSeedNearbyBathrooms(
-          current.coords.latitude,
-          current.coords.longitude
-        );
+      try {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          if (!cancelled) setErrorMsg('Permission to access location was denied');
+          return;
+        }
+        const lastKnown = await Location.getLastKnownPositionAsync({});
+        if (lastKnown && !cancelled) setLocation(lastKnown);
+        const current = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        if (!cancelled) setLocation(current);
+      } catch (e) {
+        console.log('Location error:', e instanceof Error ? e.message : String(e));
       }
     })();
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    if (!location || hasSeededRef.current) return;
+    hasSeededRef.current = true;
+    fetchAndSeedNearbyBathrooms(location.coords.latitude, location.coords.longitude);
+  }, [location]);
 
   useFocusEffect(
     React.useCallback(() => {
