@@ -181,15 +181,37 @@ export default function MapScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View>
+        <View style={{ flex: 1, marginRight: 8 }}>
           <Text style={styles.logo}>🚽 GottaGo</Text>
-          <Text style={styles.subtitle}>
+          <Text style={styles.subtitle} numberOfLines={1}>
             {errorMsg ?? (location ? '📍 Using your location' : '📍 Finding your location...')}
           </Text>
         </View>
-        <TouchableOpacity onPress={zoomToNearMe} style={styles.nearMeBtn}>
-          <Text style={styles.nearMeBtnText}>📍 Near Me</Text>
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity
+            style={styles.addBtn}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              if (!auth.currentUser) {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                Alert.alert(
+                  'Sign In Required',
+                  'You need an account to add a bathroom. It helps us keep listings trustworthy.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Sign In', onPress: () => router.push('/login') },
+                  ]
+                );
+              } else {
+                router.push('/add-bathroom');
+              }
+            }}>
+            <Text style={styles.addBtnText}>+ Add</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={zoomToNearMe} style={styles.nearMeBtn}>
+            <Text style={styles.nearMeBtnText}>📍 Near Me</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <MapView
@@ -299,8 +321,11 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#111111' },
   loadingText: { marginTop: 12, fontSize: 14, color: '#888888', fontWeight: '600' },
   header: { backgroundColor: '#1c1c1c', padding: 20, paddingTop: 60, borderBottomWidth: 1, borderBottomColor: '#2a2a2a', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  nearMeBtn: { backgroundColor: '#f5ea42', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
-  nearMeBtnText: { fontSize: 12, fontWeight: '700', color: '#111111' },
+  headerButtons: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  addBtn: { backgroundColor: '#f5ea42', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
+  addBtnText: { fontSize: 13, fontWeight: '700', color: '#111111' },
+  nearMeBtn: { backgroundColor: '#2a2a2a', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
+  nearMeBtnText: { fontSize: 12, fontWeight: '700', color: '#f5ea42' },
   logo: { fontSize: 26, fontWeight: '800', color: '#f5ea42' },
   subtitle: { fontSize: 13, color: '#888888', marginTop: 2 },
   map: { flex: 1 },

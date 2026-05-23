@@ -210,9 +210,9 @@ export default function HomeScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View>
+        <View style={{ flex: 1, marginRight: 8 }}>
           <Text style={styles.logo}>🚽 GottaGo</Text>
-          <Text style={styles.subtitle}>
+          <Text style={styles.subtitle} numberOfLines={1}>
             {loading ? 'Loading...' : `Restrooms within 5 miles · ${filtered.length} found`}
           </Text>
         </View>
@@ -256,7 +256,7 @@ export default function HomeScreen() {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setSortBy('nearest');
           }}>
-          <Text style={[styles.sortPillText, sortBy === 'nearest' && styles.sortPillTextActive]}>
+          <Text style={[styles.sortPillText, sortBy === 'nearest' && styles.sortPillTextActive]} numberOfLines={1}>
             📍 Nearest
           </Text>
         </TouchableOpacity>
@@ -266,7 +266,7 @@ export default function HomeScreen() {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setSortBy('highest');
           }}>
-          <Text style={[styles.sortPillText, sortBy === 'highest' && styles.sortPillTextActive]}>
+          <Text style={[styles.sortPillText, sortBy === 'highest' && styles.sortPillTextActive]} numberOfLines={1}>
             ⭐ Top Rated
           </Text>
         </TouchableOpacity>
@@ -391,7 +391,7 @@ export default function HomeScreen() {
                 <View style={styles.cardTop}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.cardName}>{b.name}</Text>
-                    <Text style={styles.cardSub}>📍 {b.distance}  ·  ✓ {formatLastVerified(b.lastCleaned)}</Text>
+                    <Text style={styles.cardSub} numberOfLines={1}>📍 {b.distance}  ·  ✓ {formatLastVerified(b.lastCleaned)}</Text>
                   </View>
                   <View style={styles.scoreBox}>
                     <Text style={[styles.score, { color: b.cleanliness === 0 ? '#888888' : getColor(b.cleanliness) }]}>
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
   signOutBtn: { backgroundColor: '#2a2a2a', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
   signOutText: { fontSize: 13, fontWeight: '700', color: '#aaaaaa' },
   controlRow: { backgroundColor: '#1c1c1c', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#2a2a2a', gap: 6 },
-  sortPill: { borderRadius: 99, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1.5, borderColor: '#2a2a2a', backgroundColor: '#111111' },
+  sortPill: { borderRadius: 99, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1.5, borderColor: '#2a2a2a', backgroundColor: '#111111', flexShrink: 1 },
   sortPillActive: { backgroundColor: '#f5ea42', borderColor: '#f5ea42' },
   sortPillText: { fontSize: 11, fontWeight: '700', color: '#888888' },
   sortPillTextActive: { color: '#111111' },
