@@ -33,11 +33,6 @@ const SLIDES = [
 
 const ONBOARDING_KEY = '@gottago/onboarding_complete';
 
-async function completeOnboarding() {
-  await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
-  router.replace('/login');
-}
-
 export default function OnboardingScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
@@ -48,13 +43,15 @@ export default function OnboardingScreen() {
       flatListRef.current?.scrollToIndex({ index: currentIndex + 1 });
       setCurrentIndex(currentIndex + 1);
     } else {
-      completeOnboarding();
+      AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+      router.replace('/login');
     }
   }
 
   function skip() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    completeOnboarding();
+    AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+    router.replace('/login');
   }
 
   return (
