@@ -1,6 +1,7 @@
+import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { GoogleAuthProvider, createUserWithEmailAndPassword, signInWithCredential, signInWithEmailAndPassword } from 'firebase/auth';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -16,6 +17,16 @@ import {
 } from 'react-native';
 import { auth } from '../firebaseConfig';
 
+const isExpoGo = Constants.appOwnership === 'expo';
+
+let GoogleSignin: any = null;
+if (!isExpoGo) {
+  GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
+  GoogleSignin.configure({
+    webClientId: '903796490438-ltfmpkj81bfr1dlkp97s6pdegke55vg6.apps.googleusercontent.com',
+  });
+}
+
 export default function LoginScreen() {
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const [email, setEmail] = useState('');
@@ -23,6 +34,31 @@ export default function LoginScreen() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function handleGoogleSignIn() {
+    if (!GoogleSignin) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      if (response.type === 'cancelled') return;
+      const { idToken } = response.data;
+      const credential = GoogleAuthProvider.credential(idToken);
+      await signInWithCredential(auth, credential);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (returnTo) {
+        router.replace({ pathname: '/bathroom-detail', params: { bathroomId: returnTo } });
+      } else {
+        router.replace('/(tabs)');
+      }
+    } catch (e: any) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setError(`Google sign-in failed (code: ${e?.code ?? e?.message ?? 'unknown'})`);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleAuth() {
     if (!email.trim() || !password.trim()) {
@@ -140,6 +176,18 @@ export default function LoginScreen() {
             <View style={styles.dividerLine} />
           </View>
 
+          {!isExpoGo && (
+            <TouchableOpacity
+              style={styles.googleBtn}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                handleGoogleSignIn();
+              }}
+              disabled={loading}>
+              <Text style={styles.googleBtnText}>G  Continue with Google</Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity
             style={styles.guestBtn}
             onPress={() => {
@@ -221,6 +269,14 @@ const styles = StyleSheet.create({
   divider: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   dividerLine: { flex: 1, height: 1, backgroundColor: '#2a2a2a' },
   dividerText: { color: '#555555', fontSize: 13, paddingHorizontal: 12, fontWeight: '600' },
+  googleBtn: {
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    padding: 14,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  googleBtnText: { color: '#111111', fontWeight: '700', fontSize: 14 },
   guestBtn: {
     borderRadius: 14,
     padding: 14,
