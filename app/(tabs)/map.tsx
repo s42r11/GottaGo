@@ -29,6 +29,14 @@ function getColor(score: number) {
   return 'rgba(245, 234, 66, 0.45)';
 }
 
+function getPinColor(score: number) {
+  if (score === 0) return '#555555';
+  if (score >= 4) return '#22c55e';
+  if (score >= 2) return '#f59e0b';
+  return '#f43f5e';
+}
+
+
 function getLabel(score: number) {
   if (score >= 4.5) return 'Spotless';
   if (score >= 3.5) return 'Decent';
@@ -232,25 +240,19 @@ export default function MapScreen() {
             key={b.id}
             coordinate={{ latitude: b.latitude, longitude: b.longitude }}
             tracksViewChanges={tracksViewChanges}
-
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               setSelected(b.id);
             }}
           >
-            {b.cleanliness === 0 ? (
-              <View style={styles.pinDotOuter}>
-                <View style={styles.pinDotInner} />
-              </View>
-            ) : (
-              <View style={[styles.pinOuter, { backgroundColor: getColor(b.cleanliness) }]}>
-                <View style={[styles.pinInner, { backgroundColor: '#0f172a' }]}>
-                  <Text style={[styles.pinScore, { color: getColor(b.cleanliness) }]}>
-                    {b.cleanliness.toFixed(1)}
-                  </Text>
+            <View style={styles.pinContainer}>
+              <View style={[styles.pinHead, { backgroundColor: getPinColor(b.cleanliness) }]}>
+                <View style={styles.pinHeadInner}>
+                  <Text style={styles.pinEmoji}>🚽</Text>
                 </View>
               </View>
-            )}
+              <View style={[styles.pinTail, { backgroundColor: getPinColor(b.cleanliness) }]} />
+            </View>
           </Marker>
         ))}
       </MapView>
@@ -334,11 +336,11 @@ const styles = StyleSheet.create({
   logo: { fontSize: 26, fontWeight: '800', color: '#f5ea42' },
   subtitle: { fontSize: 13, color: '#888888', marginTop: 2 },
   map: { flex: 1 },
-  pinOuter: { borderRadius: 10, padding: 2.5, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 },
-  pinInner: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  pinScore: { fontSize: 11, fontWeight: '900' },
-  pinDotOuter: { width: 18, height: 18, borderRadius: 9, backgroundColor: '#888888', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 },
-  pinDotInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#1c1c1c' },
+  pinContainer: { alignItems: 'center' },
+  pinHead: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', elevation: 5 },
+  pinHeadInner: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#1c1c1c', justifyContent: 'center', alignItems: 'center' },
+  pinEmoji: { fontSize: 17 },
+  pinTail: { width: 14, height: 14, transform: [{ rotate: '45deg' }], marginTop: -10, elevation: 4 },
   attribution: { position: 'absolute', bottom: 8, left: 8, backgroundColor: 'rgba(17,17,17,0.8)', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
   attributionText: { fontSize: 10, color: '#888888' },
   card: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#1c1c1c', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 36, borderTopWidth: 1, borderColor: '#2a2a2a', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 12, elevation: 8 },
