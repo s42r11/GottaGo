@@ -34,6 +34,7 @@ function getColor(score: number) {
 
 function getLabel(score: number) {
   if (score >= 4.5) return 'Spotless';
+  if (score >= 4) return 'Great';
   if (score > 2) return 'Decent';
   return 'Rough';
 }
