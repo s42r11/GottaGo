@@ -1,3 +1,5 @@
+import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '@/constants/theme';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { addDoc, collection, doc, getDoc, updateDoc } from 'firebase/firestore';
@@ -26,6 +28,9 @@ export default function ReviewScreen() {
   const [error, setError] = useState<string | null>(null);
   const [celebrated, setCelebrated] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(() => () => { if (dismissTimer.current) clearTimeout(dismissTimer.current); }, []);
 
   async function handleSubmit() {
     if (rating === 0) {
@@ -60,10 +65,11 @@ export default function ReviewScreen() {
           lastCleaned: new Date().toISOString(),
         });
       }
+
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setCelebrated(true);
       Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
-      setTimeout(() => router.back(), 1800);
+      dismissTimer.current = setTimeout(() => router.back(), 2000);
     } catch (e: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       console.log('Review error:', e.code, e.message);
@@ -74,50 +80,50 @@ export default function ReviewScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
       <ScrollView contentContainerStyle={styles.inner}>
 
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => {
+        {/* Back button */}
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             router.back();
-          }} style={styles.backBtn}>
-            <Text style={styles.backText}>← Back</Text>
-          </TouchableOpacity>
-        </View>
+          }}>
+          <Ionicons name="arrow-back" size={18} color={Colors.text} />
+        </TouchableOpacity>
 
         <Text style={styles.title}>Leave a Review</Text>
+
+        {/* Bathroom name pill */}
         <View style={styles.locationPill}>
-          <Text style={styles.locationText}>🚽 {bathroomName}</Text>
+          <Ionicons name="location" size={13} color={Colors.brand} />
+          <Text style={styles.locationText}>{bathroomName}</Text>
         </View>
 
-        {/* Star Rating */}
-        <View style={styles.starsCard}>
-          <Text style={styles.starsLabel}>How clean was it?</Text>
+        {/* Star rating */}
+        <View style={styles.card}>
+          <Text style={styles.sectionLabel}>CLEANLINESS</Text>
           <View style={styles.stars}>
             {[1, 2, 3, 4, 5].map(i => (
               <TouchableOpacity key={i} onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 setRating(i);
               }}>
-                <Text style={[styles.star, { color: i <= rating ? '#f5ea42' : '#334155' }]}>★</Text>
+                <Text style={[styles.star, { color: i <= rating ? Colors.brand : Colors.borderStrong }]}>★</Text>
               </TouchableOpacity>
             ))}
           </View>
-          {rating > 0 && (
-            <Text style={styles.starLabel}>{STAR_LABELS[rating]}</Text>
-          )}
+          {rating > 0 && <Text style={styles.starLabel}>{STAR_LABELS[rating]}</Text>}
         </View>
 
         {/* Comment */}
-        <View style={styles.commentCard}>
-          <Text style={styles.commentLabel}>Add a comment (optional)</Text>
+        <View style={styles.card}>
+          <Text style={styles.sectionLabel}>COMMENT (OPTIONAL)</Text>
           <TextInput
-            style={styles.input}
+            style={styles.commentInput}
             placeholder="What did you notice? Any tips for others?"
-            placeholderTextColor="#475569"
+            placeholderTextColor={Colors.textFainter}
             value={comment}
             onChangeText={setComment}
             multiline
@@ -128,7 +134,7 @@ export default function ReviewScreen() {
 
         {error && (
           <View style={styles.errorBox}>
-            <Text style={styles.errorText}>⚠️ {error}</Text>
+            <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
 
@@ -140,49 +146,86 @@ export default function ReviewScreen() {
           }}
           disabled={loading}>
           {loading
-            ? <ActivityIndicator color="#fff" />
+            ? <ActivityIndicator color={Colors.onBrand} />
             : <Text style={styles.btnText}>Submit Review</Text>
           }
         </TouchableOpacity>
 
       </ScrollView>
 
+      {/* Success overlay */}
       {celebrated && (
         <Animated.View style={[styles.celebration, { opacity: fadeAnim }]}>
-          <Text style={styles.celebrationEmoji}>🎉</Text>
-          <Text style={styles.celebrationTitle}>Review Submitted!</Text>
+          <View style={styles.celebrationIcon}>
+            <Ionicons name="checkmark-circle" size={72} color={Colors.brand} />
+          </View>
+          <Text style={styles.celebrationTitle}>Review submitted!</Text>
           <Text style={styles.celebrationSub}>Thanks for helping the community.</Text>
         </Animated.View>
       )}
-
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111111' },
-  celebration: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#111111', justifyContent: 'center', alignItems: 'center', gap: 12 },
-  celebrationEmoji: { fontSize: 80 },
-  celebrationTitle: { fontSize: 28, fontWeight: '900', color: '#f8fafc' },
-  celebrationSub: { fontSize: 16, color: '#888888', fontWeight: '500' },
-  inner: { padding: 24 },
-  header: { marginBottom: 16, marginTop: 40 },
-  backBtn: { alignSelf: 'flex-start' },
-  backText: { fontSize: 15, color: '#f5ea42', fontWeight: '600' },
-  title: { fontSize: 28, fontWeight: '900', color: '#f8fafc', marginBottom: 12 },
-  locationPill: { backgroundColor: '#1c1c1c', borderRadius: 99, paddingHorizontal: 16, paddingVertical: 8, alignSelf: 'flex-start', marginBottom: 24, borderWidth: 1, borderColor: '#2a2a2a' },
-  locationText: { fontSize: 13, color: '#aaaaaa', fontWeight: '600' },
-  starsCard: { backgroundColor: '#1c1c1c', borderRadius: 20, padding: 24, marginBottom: 16, borderWidth: 1, borderColor: '#2a2a2a', alignItems: 'center' },
-  starsLabel: { fontSize: 16, fontWeight: '700', color: '#f8fafc', marginBottom: 16 },
-  stars: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  container: { flex: 1, backgroundColor: Colors.bg },
+  inner: { padding: 24, paddingTop: 56, paddingBottom: 48 },
+
+  backBtn: {
+    width: 38, height: 38, borderRadius: 12,
+    backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 24,
+  },
+
+  title: { fontSize: 28, fontWeight: '900', color: Colors.text, letterSpacing: -0.5, marginBottom: 12 },
+
+  locationPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: Colors.surface, borderRadius: 99,
+    paddingHorizontal: 14, paddingVertical: 8,
+    alignSelf: 'flex-start', marginBottom: 28,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  locationText: { fontSize: 13, color: Colors.textMuted, fontWeight: '600' },
+
+  card: {
+    backgroundColor: Colors.surface, borderRadius: 20, padding: 20,
+    marginBottom: 16, borderWidth: 1, borderColor: Colors.border,
+  },
+  sectionLabel: { fontSize: 11, fontWeight: '800', color: Colors.textFainter, letterSpacing: 1, marginBottom: 16 },
+
+  stars: { flexDirection: 'row', gap: 8, justifyContent: 'center', marginBottom: 8 },
   star: { fontSize: 44 },
-  starLabel: { fontSize: 16, fontWeight: '700', color: '#f5ea42', marginTop: 4 },
-  commentCard: { backgroundColor: '#1c1c1c', borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#2a2a2a' },
-  commentLabel: { fontSize: 14, fontWeight: '700', color: '#aaaaaa', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 },
-  input: { backgroundColor: '#111111', borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 14, fontSize: 15, color: '#f8fafc', minHeight: 100 },
+  starLabel: { fontSize: 15, fontWeight: '700', color: Colors.brand, textAlign: 'center', marginTop: 4 },
+
+  commentInput: {
+    backgroundColor: Colors.surfaceInput, borderWidth: 1, borderColor: Colors.border,
+    borderRadius: 12, padding: 13, fontSize: 15, color: Colors.text, minHeight: 100,
+  },
+
   errorBox: { backgroundColor: '#450a0a', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#7f1d1d' },
   errorText: { color: '#fca5a5', fontSize: 13, fontWeight: '600' },
-  btn: { backgroundColor: '#f5ea42', borderRadius: 14, padding: 16, alignItems: 'center', marginBottom: 40, shadowColor: '#f5ea42', shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 },
 
-  btnText: { color: '#111111', fontWeight: '800', fontSize: 16 },
+  btn: {
+    backgroundColor: Colors.brand, borderRadius: 14, padding: 16,
+    alignItems: 'center', marginBottom: 16,
+    shadowColor: Colors.brand, shadowOpacity: 0.35, shadowRadius: 12, elevation: 6,
+  },
+  btnText: { color: Colors.onBrand, fontWeight: '800', fontSize: 16 },
+
+  celebration: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: Colors.bg,
+    justifyContent: 'center', alignItems: 'center', gap: 16,
+  },
+  celebrationIcon: {
+    width: 120, height: 120, borderRadius: 36,
+    backgroundColor: Colors.brandTintBg,
+    borderWidth: 1, borderColor: Colors.brand + '33',
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 8,
+  },
+  celebrationTitle: { fontSize: 28, fontWeight: '900', color: Colors.text, letterSpacing: -0.4 },
+  celebrationSub: { fontSize: 15, color: Colors.textMuted, fontWeight: '500' },
 });

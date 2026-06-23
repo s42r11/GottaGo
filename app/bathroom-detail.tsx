@@ -1,11 +1,12 @@
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, getRatingColor } from '@/constants/theme';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { addDoc, collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
-  Animated,
   Linking,
   RefreshControl,
   ScrollView,
@@ -15,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
 import { auth, db } from '../firebaseConfig';
 import { formatDistance, formatLastVerified, getDistanceMiles } from '../utils/distance';
 
@@ -45,19 +47,6 @@ type Review = {
   createdAt: string;
 };
 
-function getColor(score: number) {
-  if (score >= 4.5) return 'rgba(245, 234, 66, 0.9)';
-  if (score >= 3.5) return 'rgba(245, 234, 66, 0.65)';
-  return 'rgba(245, 234, 66, 0.45)';
-}
-
-function getLabel(score: number) {
-  if (score >= 4.5) return 'Spotless';
-  if (score >= 4) return 'Great';
-  if (score > 2) return 'Decent';
-  return 'Rough';
-}
-
 function renderStars(score: number): string {
   const filled = Math.round(score);
   return '★'.repeat(filled) + '☆'.repeat(5 - filled);
@@ -76,27 +65,50 @@ function formatReviewDate(iso: string): string {
   return `${days} days ago`;
 }
 
-function AnimatedBar({ cleanliness }: { cleanliness: number }) {
-  const anim = useRef(new Animated.Value(0)).current;
-  const targetWidth = cleanliness === 0 ? 0 : (Math.round(cleanliness) / 5) * 100;
-
-  useEffect(() => {
-    Animated.timing(anim, {
-      toValue: targetWidth,
-      duration: 600,
-      useNativeDriver: false,
-    }).start();
-  }, [targetWidth]);
+function DistributionBars({ reviews }: { reviews: Review[] }) {
+  const total = reviews.length;
+  const bars = [5, 4, 3, 2, 1].map(star => ({
+    star,
+    pct: total > 0 ? (reviews.filter(r => r.rating === star).length / total) * 100 : 0,
+    color: star >= 4 ? '#34d399' : star === 3 ? '#fbbf24' : '#f87171',
+  }));
 
   return (
-    <View style={styles.barBg}>
-      <Animated.View style={[styles.barFill, {
-        width: anim.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'] }),
-        backgroundColor: cleanliness === 0 ? '#1e293b' : getColor(cleanliness),
-      }]} />
+    <View style={{ gap: 5 }}>
+      {bars.map(b => (
+        <View key={b.star} style={styles.distRow}>
+          <Text style={styles.distLabel}>{b.star}</Text>
+          <View style={styles.distBarBg}>
+            <View style={[styles.distBarFill, { width: `${b.pct}%`, backgroundColor: b.color }]} />
+          </View>
+        </View>
+      ))}
     </View>
   );
 }
+
+function AmenityCell({ label }: { label: string }) {
+  return (
+    <View style={styles.amenityCell}>
+      <View style={styles.amenityCheck}>
+        <Ionicons name="checkmark" size={10} color={Colors.brand} />
+      </View>
+      <Text style={styles.amenityCellText}>{label}</Text>
+    </View>
+  );
+}
+
+const DARK_MAP_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#3b3f48' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#8a8a8a' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#242424' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#565c69' }] },
+  { featureType: 'road.local', elementType: 'geometry', stylers: [{ color: '#4d5360' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#2b3a4a' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#37492f' }] },
+  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#2f3948' }] },
+  { featureType: 'administrative', elementType: 'geometry', stylers: [{ color: '#4a4a4a' }] },
+];
 
 const STAR_LABELS = ['', 'Terrible 😱', 'Bad 👎', 'OK 😐', 'Good 👍', 'Spotless ✨'];
 
@@ -111,7 +123,10 @@ export default function BathroomDetailScreen() {
 
   async function load() {
     const snap = await getDoc(doc(db, 'bathrooms', bathroomId));
-    if (!snap.exists()) return;
+    if (!snap.exists()) {
+      setLoading(false);
+      return;
+    }
     const data = { id: snap.id, ...snap.data() } as Bathroom;
     setBathroom(data);
 
@@ -130,14 +145,40 @@ export default function BathroomDetailScreen() {
     setLoading(false);
   }
 
-  useFocusEffect(useCallback(() => {
-    load();
-  }, [bathroomId]));
+  useFocusEffect(useCallback(() => { load(); }, [bathroomId]));
 
   async function onRefresh() {
     setRefreshing(true);
     await load();
     setRefreshing(false);
+  }
+
+  async function submitReport(type: 'bathroom' | 'review', reviewId?: string, reportedContent?: string) {
+    if (!auth.currentUser) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert(
+        'Sign In Required',
+        'You need an account to report content.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Sign In', onPress: () => router.push({ pathname: '/login', params: { returnTo: bathroom!.id } }) },
+        ]
+      );
+      return;
+    }
+    const key = reviewId ?? 'bathroom';
+    if (reported.has(key)) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setReported(prev => new Set(prev).add(key));
+    await addDoc(collection(db, 'reports'), {
+      bathroomId: bathroom!.id,
+      bathroomName: bathroom!.name,
+      type,
+      reviewId: reviewId ?? null,
+      reportedContent: reportedContent ?? null,
+      reportedBy: auth.currentUser.uid,
+      createdAt: new Date().toISOString(),
+    });
   }
 
   if (loading || !bathroom) {
@@ -148,237 +189,303 @@ export default function BathroomDetailScreen() {
     );
   }
 
-  async function submitReport(type: 'bathroom' | 'review', reviewId?: string, reportedContent?: string) {
-    if (!auth.currentUser) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert(
-        'Sign In Required',
-        'You need an account to report content. It helps us keep reports accountable.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Sign In', onPress: () => router.push({ pathname: '/login', params: { returnTo: bathroom.id } }) },
-        ]
-      );
-      return;
-    }
-    const key = reviewId ?? 'bathroom';
-    if (reported.has(key)) return;
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setReported(prev => new Set(prev).add(key));
-    await addDoc(collection(db, 'reports'), {
-      bathroomId: bathroom.id,
-      bathroomName: bathroom.name,
-      type,
-      reviewId: reviewId ?? null,
-      reportedContent: reportedContent ?? null,
-      reportedBy: auth.currentUser.uid,
-      createdAt: new Date().toISOString(),
-    });
-  }
-
-  const amenities = [
-    bathroom.accessible && '♿ Accessible',
-    bathroom.genderNeutral && '⚧ Gender Neutral',
-    bathroom.free && '🆓 Free',
-    bathroom.babyChanging && '👶 Baby Changing',
-    bathroom.singleStall && '🚪 Single Stall',
-  ].filter(Boolean) as string[];
+  const ratingColor = getRatingColor(bathroom.cleanliness);
+  const hasAmenities = bathroom.accessible || bathroom.genderNeutral || bathroom.free || bathroom.babyChanging || bathroom.singleStall;
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.inner}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f5ea42" colors={['#f5ea42']} />}
-    >
-
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          router.back();
-        }} style={styles.backBtn}>
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => submitReport('bathroom')} style={styles.reportBtn}>
-          <Text style={styles.reportText}>
-            {reported.has('bathroom') ? 'Reported ✓' : 'Report listing'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Name + address */}
-      <Text style={styles.name}>{bathroom.name}</Text>
-      {bathroom.address ? (
-        <TouchableOpacity onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(bathroom.address)}`);
-        }}>
-          <Text style={styles.address}>📍 <Text style={styles.addressLink}>{bathroom.address}</Text></Text>
-        </TouchableOpacity>
-      ) : null}
-      {bathroom.floor ? <Text style={styles.floor}>{bathroom.floor}</Text> : null}
-
-      {/* Score card */}
-      <View style={styles.scoreCard}>
-        <View style={styles.scoreRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.stars, { color: bathroom.cleanliness === 0 ? '#475569' : getColor(bathroom.cleanliness) }]}>
-              {bathroom.cleanliness === 0 ? 'Not yet rated' : renderStars(bathroom.cleanliness)}
-            </Text>
-            <Text style={[styles.scoreLabel, { color: bathroom.cleanliness === 0 ? '#475569' : getColor(bathroom.cleanliness) }]}>
-              {bathroom.cleanliness === 0
-                ? 'Be the first to leave a review'
-                : `${getLabel(bathroom.cleanliness)} · ${bathroom.reviewCount} review${bathroom.reviewCount === 1 ? '' : 's'}`}
-            </Text>
-          </View>
-          {bathroom.cleanliness > 0 && (
-            <Text style={[styles.bigScore, { color: getColor(bathroom.cleanliness) }]}>
-              {bathroom.cleanliness.toFixed(1)}
-            </Text>
-          )}
-        </View>
-        <AnimatedBar cleanliness={bathroom.cleanliness} />
-
-        <View style={styles.metaRow}>
-          {bathroom.verified
-            ? <Text style={styles.verifiedBadge}>✓ Verified</Text>
-            : <Text style={styles.unverifiedBadge}>Unverified</Text>}
-          {bathroom.verified && !isNaN(new Date(bathroom.lastCleaned).getTime()) && (
-            <Text style={styles.metaText}>Last reviewed {formatLastVerified(bathroom.lastCleaned)}</Text>
-          )}
-          {distance && <Text style={styles.metaText}>📍 {distance}</Text>}
-        </View>
-      </View>
-
-      {/* Amenities */}
-      {amenities.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>AMENITIES</Text>
-          <View style={styles.badges}>
-            {amenities.map(a => (
-              <Text key={a} style={styles.badge}>{a}</Text>
-            ))}
-          </View>
-        </View>
-      )}
-
-      {/* Action buttons */}
-      <View style={styles.buttons}>
-        <TouchableOpacity
-          style={styles.btn}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            if (!auth.currentUser) {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-              Alert.alert(
-                'Sign In Required',
-                'You need an account to leave a review. It helps us keep ratings trustworthy.',
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Sign In', onPress: () => router.push({ pathname: '/login', params: { returnTo: bathroom.id } }) },
-                ]
-              );
-            } else {
-              router.push({ pathname: '/review', params: { bathroomId: bathroom.id, bathroomName: bathroom.name } });
-            }
-          }}>
-          <Text style={styles.btnText}>✍️ Review</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.btnOutline}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${bathroom.latitude},${bathroom.longitude}`);
-          }}>
-          <Text style={styles.btnOutlineText}>🗺 Directions</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.btnOutline}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            Share.share({
-              message: `Check out ${bathroom.name} on GottaGo!\ngottago://bathroom-detail?bathroomId=${bathroom.id}`,
-            });
-          }}>
-          <Text style={styles.btnOutlineText}>🔗 Share</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Reviews */}
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>
-          {reviews.length === 0 ? 'NO REVIEWS YET' : `REVIEWS (${reviews.length})`}
-        </Text>
-        {reviews.length === 0 ? (
-          <Text style={styles.noReviews}>Be the first to share your experience.</Text>
-        ) : (
-          reviews.map(r => (
-            <View key={r.id} style={styles.reviewCard}>
-              <View style={styles.reviewHeader}>
-                <Text style={styles.reviewStars}>{renderStars(r.rating)}</Text>
-                <Text style={styles.reviewMeta}>
-                  {r.userEmail ? `${r.userEmail.split('@')[0].substring(0, 4)}••••` : 'Anonymous'}  ·  {formatReviewDate(r.createdAt)}
+    <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.inner}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.brand} colors={[Colors.brand]} />}
+      >
+        {/* Map hero */}
+        <View style={styles.mapHeroWrapper}>
+          <MapView
+            style={styles.mapHero}
+            initialRegion={{
+              latitude: bathroom.latitude,
+              longitude: bathroom.longitude,
+              latitudeDelta: 0.004,
+              longitudeDelta: 0.004,
+            }}
+            customMapStyle={DARK_MAP_STYLE}
+            provider="google"
+            scrollEnabled={false}
+            zoomEnabled={false}
+            rotateEnabled={false}
+            pitchEnabled={false}
+            showsUserLocation={false}
+            showsMyLocationButton={false}
+            showsCompass={false}
+            toolbarEnabled={false}
+            pointerEvents="none"
+          >
+            <Marker coordinate={{ latitude: bathroom.latitude, longitude: bathroom.longitude }}>
+              <View style={[styles.mapPin, { backgroundColor: ratingColor }]}>
+                <Text style={styles.mapPinText}>
+                  {bathroom.cleanliness === 0 ? 'New' : bathroom.cleanliness.toFixed(1)}
                 </Text>
               </View>
-              <Text style={styles.reviewRatingLabel}>{STAR_LABELS[r.rating]}</Text>
-              {r.comment ? <Text style={styles.reviewComment}>{r.comment}</Text> : null}
-              <TouchableOpacity
-                onPress={() => submitReport('review', r.id, r.comment)}
-                style={styles.reportReviewBtn}>
-                <Text style={styles.reportReviewText}>
-                  {reported.has(r.id) ? 'Reported ✓' : 'Report review'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ))
-        )}
-      </View>
+            </Marker>
+          </MapView>
 
-    </ScrollView>
+          {/* Floating back button */}
+          <TouchableOpacity
+            style={styles.mapBackBtn}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.back();
+            }}>
+            <Ionicons name="arrow-back" size={18} color={Colors.text} />
+          </TouchableOpacity>
+
+          {/* Floating report button */}
+          <TouchableOpacity
+            style={styles.mapReportBtn}
+            onPress={() => submitReport('bathroom')}>
+            <Ionicons
+              name="flag-outline"
+              size={16}
+              color={reported.has('bathroom') ? Colors.brand : Colors.textMuted}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Name — overlaps map bottom */}
+        <View style={styles.nameWrapper}>
+          <Text style={styles.name}>{bathroom.name}</Text>
+          {bathroom.address ? (
+            <TouchableOpacity
+              style={styles.addressRow}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(bathroom.address)}`);
+              }}>
+              <Ionicons name="location" size={13} color={Colors.brand} />
+              <Text style={styles.addressLink}>{bathroom.address}</Text>
+            </TouchableOpacity>
+          ) : null}
+          {bathroom.floor ? <Text style={styles.floor}>{bathroom.floor}</Text> : null}
+        </View>
+
+        {/* Rating card */}
+        <View style={styles.ratingCard}>
+          <View style={styles.ratingCardTop}>
+            {/* Left: score + stars + count */}
+            <View style={styles.ratingLeft}>
+              <Text style={[styles.bigScore, { color: ratingColor }]}>
+                {bathroom.cleanliness === 0 ? '—' : bathroom.cleanliness.toFixed(1)}
+              </Text>
+              <Text style={[styles.starGlyphs, { color: ratingColor }]}>
+                {bathroom.cleanliness === 0 ? '☆☆☆☆☆' : renderStars(bathroom.cleanliness)}
+              </Text>
+              <Text style={styles.reviewCount}>
+                {bathroom.reviewCount === 0 ? 'No reviews yet' : `${bathroom.reviewCount} review${bathroom.reviewCount === 1 ? '' : 's'}`}
+              </Text>
+            </View>
+
+            {/* Vertical divider */}
+            <View style={styles.dividerV} />
+
+            {/* Right: distribution bars */}
+            <View style={styles.ratingRight}>
+              <DistributionBars reviews={reviews} />
+            </View>
+          </View>
+
+          <View style={styles.dividerH} />
+
+          {/* Meta row */}
+          <View style={styles.metaRow}>
+            {bathroom.verified ? (
+              <View style={styles.verifiedChip}>
+                <Ionicons name="checkmark" size={10} color={Colors.brand} />
+                <Text style={styles.verifiedChipText}>Verified</Text>
+              </View>
+            ) : (
+              <View style={styles.unverifiedChip}>
+                <Text style={styles.unverifiedChipText}>Unverified</Text>
+              </View>
+            )}
+            {bathroom.verified && bathroom.lastCleaned && bathroom.lastCleaned !== 'Unknown' && (
+              <Text style={styles.metaText}>Reviewed {formatLastVerified(bathroom.lastCleaned)}</Text>
+            )}
+            {distance && <Text style={styles.metaText}>{distance} away</Text>}
+          </View>
+        </View>
+
+        {/* Amenities */}
+        {hasAmenities && (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>AMENITIES</Text>
+            <View style={styles.amenityGrid}>
+              {bathroom.accessible && <AmenityCell label="Accessible" />}
+              {bathroom.free && <AmenityCell label="Free" />}
+              {bathroom.genderNeutral && <AmenityCell label="Gender Neutral" />}
+              {bathroom.babyChanging && <AmenityCell label="Baby Changing" />}
+              {bathroom.singleStall && <AmenityCell label="Single Stall" />}
+            </View>
+          </View>
+        )}
+
+        {/* Action row */}
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={styles.reviewBtn}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              if (!auth.currentUser) {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                Alert.alert(
+                  'Sign In Required',
+                  'You need an account to leave a review.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Sign In', onPress: () => router.push({ pathname: '/login', params: { returnTo: bathroom.id } }) },
+                  ]
+                );
+              } else {
+                router.push({ pathname: '/review', params: { bathroomId: bathroom.id, bathroomName: bathroom.name } });
+              }
+            }}>
+            <Ionicons name="create-outline" size={16} color={Colors.onBrand} />
+            <Text style={styles.reviewBtnText}>Write a Review</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.iconActionBtn}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${bathroom.latitude},${bathroom.longitude}`);
+            }}>
+            <Ionicons name="navigate" size={18} color={Colors.textMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.iconActionBtn}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              Share.share({ message: `Check out ${bathroom.name} on GottaGo!\ngottago://bathroom-detail?bathroomId=${bathroom.id}` });
+            }}>
+            <Ionicons name="share-social-outline" size={18} color={Colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Reviews */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>
+            {reviews.length === 0 ? 'NO REVIEWS YET' : `REVIEWS (${reviews.length})`}
+          </Text>
+          {reviews.length === 0 ? (
+            <Text style={styles.noReviews}>Be the first to share your experience.</Text>
+          ) : (
+            reviews.map(r => (
+              <View key={r.id} style={styles.reviewCard}>
+                <View style={styles.reviewHeader}>
+                  <Text style={[styles.reviewStars, { color: getRatingColor(r.rating) }]}>
+                    {renderStars(r.rating)}
+                  </Text>
+                  <Text style={styles.reviewMeta}>
+                    {r.userEmail ? `${r.userEmail.split('@')[0].substring(0, 4)}••••` : 'Anonymous'} · {formatReviewDate(r.createdAt)}
+                  </Text>
+                </View>
+                <Text style={styles.reviewLabel}>{STAR_LABELS[r.rating]}</Text>
+                {r.comment ? <Text style={styles.reviewComment}>{r.comment}</Text> : null}
+                <TouchableOpacity
+                  onPress={() => submitReport('review', r.id, r.comment)}
+                  style={styles.reportReviewBtn}>
+                  <Ionicons name="flag-outline" size={11} color={reported.has(r.id) ? Colors.brand : Colors.textFainter} />
+                  <Text style={[styles.reportReviewText, reported.has(r.id) && { color: Colors.brand }]}>
+                    {reported.has(r.id) ? 'Reported' : 'Report'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ))
+          )}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111111' },
-  inner: { padding: 24, paddingBottom: 60 },
-  loadingContainer: { flex: 1, backgroundColor: '#111111', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#888888', fontSize: 15, fontWeight: '600' },
-  header: { marginTop: 40, marginBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  backBtn: { alignSelf: 'flex-start' },
-  backText: { fontSize: 15, color: '#f5ea42', fontWeight: '600' },
-  reportBtn: { alignSelf: 'flex-start' },
-  reportText: { fontSize: 12, color: '#555555', fontWeight: '600' },
-  reportReviewBtn: { alignSelf: 'flex-end', marginTop: 8 },
-  reportReviewText: { fontSize: 11, color: '#555555', fontWeight: '600' },
-  name: { fontSize: 26, fontWeight: '900', color: '#f8fafc', marginBottom: 6 },
-  address: { fontSize: 14, color: '#f5ea42', marginBottom: 2 },
-  addressLink: { textDecorationLine: 'underline' },
-  floor: { fontSize: 13, color: '#555555', marginBottom: 20 },
-  scoreCard: { backgroundColor: '#1c1c1c', borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#2a2a2a' },
-  scoreRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  stars: { fontSize: 20, fontWeight: '900', marginBottom: 4 },
-  scoreLabel: { fontSize: 13, fontWeight: '600' },
-  bigScore: { fontSize: 40, fontWeight: '900', marginLeft: 12 },
-  barBg: { height: 6, backgroundColor: '#2a2a2a', borderRadius: 99, marginBottom: 14, overflow: 'hidden' },
-  barFill: { height: '100%', borderRadius: 99 },
-  metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center' },
-  verifiedBadge: { fontSize: 11, fontWeight: '700', backgroundColor: '#2a2000', color: '#f5ea42', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
-  unverifiedBadge: { fontSize: 11, fontWeight: '700', backgroundColor: '#1c1c1c', color: '#555555', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99, borderWidth: 1, borderColor: '#2a2a2a' },
-  metaText: { fontSize: 12, color: '#888888', fontWeight: '500' },
-  section: { marginBottom: 20 },
-  sectionLabel: { fontSize: 11, fontWeight: '800', color: '#555555', letterSpacing: 1, marginBottom: 12 },
-  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  badge: { fontSize: 13, fontWeight: '600', backgroundColor: '#1e1a00', color: '#f5ea42', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 99 },
-  buttons: { flexDirection: 'row', gap: 10, marginBottom: 28 },
-  btn: { flex: 1, backgroundColor: '#f5ea42', borderRadius: 12, padding: 14, alignItems: 'center', shadowColor: '#f5ea42', shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
-  btnText: { color: '#111111', fontWeight: '700', fontSize: 14 },
-  btnOutline: { flex: 1, borderRadius: 12, padding: 14, alignItems: 'center', borderWidth: 1.5, borderColor: '#2a2a2a' },
-  btnOutlineText: { color: '#aaaaaa', fontWeight: '700', fontSize: 14 },
-  noReviews: { fontSize: 14, color: '#555555', fontWeight: '500' },
-  reviewCard: { backgroundColor: '#1c1c1c', borderRadius: 16, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: '#2a2a2a' },
+  container: { flex: 1, backgroundColor: Colors.bg },
+  inner: { paddingBottom: 60 },
+  loadingContainer: { flex: 1, backgroundColor: Colors.bg, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: Colors.textMuted, fontSize: 15, fontWeight: '600' },
+
+  // Map hero
+  mapHeroWrapper: { position: 'relative' },
+  mapHero: { height: 190, width: '100%' },
+  mapPin: { borderRadius: 99, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 2, borderColor: Colors.bg },
+  mapPinText: { fontSize: 12, fontWeight: '800', color: Colors.bg },
+  mapBackBtn: {
+    position: 'absolute', top: 48, left: 16,
+    width: 36, height: 36, borderRadius: 12,
+    backgroundColor: Colors.surface + 'dd',
+    borderWidth: 1, borderColor: Colors.border,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  mapReportBtn: {
+    position: 'absolute', top: 48, right: 16,
+    width: 36, height: 36, borderRadius: 12,
+    backgroundColor: Colors.surface + 'dd',
+    borderWidth: 1, borderColor: Colors.border,
+    justifyContent: 'center', alignItems: 'center',
+  },
+
+  // Name section
+  nameWrapper: { paddingHorizontal: 20, marginTop: 20, marginBottom: 16 },
+  name: { fontSize: 24, fontWeight: '800', color: Colors.text, letterSpacing: -0.4, marginBottom: 6 },
+  addressRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 3 },
+  addressLink: { fontSize: 13, color: Colors.brand, fontWeight: '600', textDecorationLine: 'underline' },
+  floor: { fontSize: 12, color: Colors.textFainter, fontWeight: '500' },
+
+  // Rating card
+  ratingCard: { marginHorizontal: 20, marginBottom: 20, backgroundColor: Colors.surface, borderRadius: 18, borderWidth: 1, borderColor: Colors.border, overflow: 'hidden' },
+  ratingCardTop: { flexDirection: 'row', padding: 18, gap: 16, alignItems: 'center' },
+  ratingLeft: { alignItems: 'flex-start', gap: 3 },
+  bigScore: { fontSize: 42, fontWeight: '800', lineHeight: 46 },
+  starGlyphs: { fontSize: 14, letterSpacing: 1 },
+  reviewCount: { fontSize: 12, color: Colors.textFaint, fontWeight: '500' },
+  dividerV: { width: 1, alignSelf: 'stretch', backgroundColor: Colors.border },
+  ratingRight: { flex: 1 },
+  distRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  distLabel: { fontSize: 10, color: Colors.textFaint, fontWeight: '600', width: 8, textAlign: 'right' },
+  distBarBg: { flex: 1, height: 5, backgroundColor: Colors.border, borderRadius: 99, overflow: 'hidden' },
+  distBarFill: { height: '100%', borderRadius: 99 },
+  dividerH: { height: 1, backgroundColor: Colors.border },
+  metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: 14 },
+  verifiedChip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: Colors.brandTintBg, borderRadius: 99, paddingHorizontal: 8, paddingVertical: 4 },
+  verifiedChipText: { fontSize: 11, fontWeight: '700', color: Colors.brand },
+  unverifiedChip: { borderRadius: 99, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1, borderColor: Colors.border },
+  unverifiedChipText: { fontSize: 11, fontWeight: '600', color: Colors.textFainter },
+  metaText: { fontSize: 12, color: Colors.textFaint, fontWeight: '500' },
+
+  // Sections
+  section: { marginHorizontal: 20, marginBottom: 20 },
+  sectionLabel: { fontSize: 11, fontWeight: '800', color: Colors.textFainter, letterSpacing: 1, marginBottom: 12 },
+
+  // Amenity grid
+  amenityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  amenityCell: { width: '47%', flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: Colors.surface, borderRadius: 13, borderWidth: 1, borderColor: Colors.border, padding: 12 },
+  amenityCheck: { width: 22, height: 22, borderRadius: 6, backgroundColor: Colors.brandTintBg, borderWidth: 1, borderColor: Colors.brand + '44', justifyContent: 'center', alignItems: 'center' },
+  amenityCellText: { fontSize: 13, fontWeight: '600', color: Colors.textMuted, flex: 1 },
+
+  // Action row
+  actions: { flexDirection: 'row', gap: 10, marginHorizontal: 20, marginBottom: 24 },
+  reviewBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.brand, borderRadius: 13, paddingVertical: 14, shadowColor: Colors.brand, shadowOpacity: 0.4, shadowRadius: 8, elevation: 4 },
+  reviewBtnText: { fontSize: 14, fontWeight: '700', color: Colors.onBrand },
+  iconActionBtn: { width: 50, height: 50, borderRadius: 13, borderWidth: 1, borderColor: Colors.border, justifyContent: 'center', alignItems: 'center' },
+
+  // Reviews
+  noReviews: { fontSize: 14, color: Colors.textFainter, fontWeight: '500' },
+  reviewCard: { backgroundColor: Colors.surface, borderRadius: 16, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: Colors.border },
   reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  reviewStars: { fontSize: 15, color: '#f5ea42' },
-  reviewMeta: { fontSize: 11, color: '#aaaaaa', fontWeight: '500' },
-  reviewRatingLabel: { fontSize: 12, fontWeight: '700', color: '#888888', marginBottom: 6 },
-  reviewComment: { fontSize: 14, color: '#aaaaaa', lineHeight: 21 },
+  reviewStars: { fontSize: 14 },
+  reviewMeta: { fontSize: 11, color: Colors.textMuted, fontWeight: '500' },
+  reviewLabel: { fontSize: 12, fontWeight: '700', color: Colors.textMuted, marginBottom: 6 },
+  reviewComment: { fontSize: 14, color: Colors.textMuted, lineHeight: 21 },
+  reportReviewBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-end', marginTop: 10 },
+  reportReviewText: { fontSize: 11, color: Colors.textFainter, fontWeight: '600' },
 });

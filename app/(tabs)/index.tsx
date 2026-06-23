@@ -1,10 +1,13 @@
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, getRatingColor, getRatingLabel } from '@/constants/theme';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { router, useFocusEffect } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import { collection, getDocs } from 'firebase/firestore';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Animated, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, Linking, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
 import { auth, db } from '../../firebaseConfig';
 import { formatDistance, formatLastVerified, getDistanceMiles } from '../../utils/distance';
 
@@ -26,34 +29,14 @@ type Bathroom = {
   longitude: number;
 };
 
-function getColor(score: number) {
-  if (score >= 4.5) return 'rgba(245, 234, 66, 0.9)';
-  if (score >= 3.5) return 'rgba(245, 234, 66, 0.65)';
-  return 'rgba(245, 234, 66, 0.45)';
-}
-
-function getLabel(score: number) {
-  if (score >= 4.5) return 'Spotless';
-  if (score >= 4) return 'Great';
-  if (score > 2) return 'Decent';
-  return 'Rough';
-}
-
-function renderStars(score: number): string {
-  const filled = Math.round(score);
-  return '★'.repeat(filled) + '☆'.repeat(5 - filled);
-}
 
 const FILTER_OPTIONS = [
-  { key: 'free', label: '🆓', fullLabel: '🆓 Free' },
-  { key: 'accessible', label: '♿', fullLabel: '♿ Accessible' },
-  { key: 'babyChanging', label: '👶', fullLabel: '👶 Baby Changing' },
-  { key: 'genderNeutral', label: '⚧', fullLabel: '⚧ Neutral' },
-  { key: 'verified', label: '✓', fullLabel: '✓ Verified' },
+  { key: 'free', label: 'Free' },
+  { key: 'accessible', label: 'Accessible' },
+  { key: 'babyChanging', label: 'Baby Changing' },
+  { key: 'genderNeutral', label: 'Gender Neutral' },
+  { key: 'verified', label: 'Verified' },
 ];
-
-const PREVIEW_FILTERS = FILTER_OPTIONS.slice(0, 3);
-const EXTRA_FILTERS = FILTER_OPTIONS.slice(3);
 
 type SortOption = 'nearest' | 'highest';
 
@@ -72,30 +55,17 @@ function SkeletonCard() {
   return (
     <Animated.View style={[styles.skeletonCard, { opacity: pulse }]}>
       <View style={styles.skeletonRow}>
-        <View style={{ flex: 1 }}>
+        <View style={styles.skeletonChip} />
+        <View style={{ flex: 1, marginLeft: 12 }}>
           <View style={styles.skeletonTitle} />
           <View style={styles.skeletonSubtitle} />
         </View>
-        <View style={styles.skeletonScore} />
       </View>
-      <View style={styles.skeletonBar} />
       <View style={styles.skeletonBadgesRow}>
         <View style={styles.skeletonBadge} />
         <View style={styles.skeletonBadge} />
       </View>
     </Animated.View>
-  );
-}
-
-function ScoreBar({ cleanliness }: { cleanliness: number }) {
-  const width = cleanliness === 0 ? 0 : (Math.round(cleanliness) / 5) * 100;
-  return (
-    <View style={styles.barBg}>
-      <View style={[styles.barFill, {
-        width: `${width}%`,
-        backgroundColor: cleanliness === 0 ? '#1e293b' : getColor(cleanliness),
-      }]} />
-    </View>
   );
 }
 
@@ -147,23 +117,13 @@ export default function HomeScreen() {
         if (!cancelled) setLocationDenied(true);
         return;
       }
-      if (status === 'granted') {
-        const lastKnown = await Location.getLastKnownPositionAsync({});
-        if (lastKnown && !cancelled) {
-          setUserLocation({
-            latitude: lastKnown.coords.latitude,
-            longitude: lastKnown.coords.longitude,
-          });
-        }
-        const current = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
-        if (!cancelled) {
-          setUserLocation({
-            latitude: current.coords.latitude,
-            longitude: current.coords.longitude,
-          });
-        }
+      const lastKnown = await Location.getLastKnownPositionAsync({});
+      if (lastKnown && !cancelled) {
+        setUserLocation({ latitude: lastKnown.coords.latitude, longitude: lastKnown.coords.longitude });
+      }
+      const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      if (!cancelled) {
+        setUserLocation({ latitude: current.coords.latitude, longitude: current.coords.longitude });
       }
     })();
     return () => { cancelled = true; };
@@ -205,136 +165,116 @@ export default function HomeScreen() {
     }, [])
   );
 
-  const extraActiveCount = EXTRA_FILTERS.filter(f => filters.includes(f.key)).length;
+  const heroBathroom = sortBy === 'nearest' && filtered.length > 0 ? filtered[0] : null;
+  const listBathrooms = heroBathroom ? filtered.slice(1) : filtered;
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={{ flex: 1, marginRight: 8 }}>
-          <Text style={styles.logo}>🚽 GottaGo</Text>
-          <Text style={styles.subtitle} numberOfLines={1}>
-            {loading ? 'Loading...' : `Restrooms within 5 miles · ${filtered.length} found`}
+        <View style={styles.headerTop}>
+          <Text style={styles.logo}>
+            GottaGo<Text style={styles.logoDot}>.</Text>
           </Text>
+          <View style={styles.headerIcons}>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }}>
+              <Ionicons name="search-outline" size={18} color={Colors.textMuted} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.iconBtn, filtersExpanded && styles.iconBtnActive]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setFiltersExpanded(!filtersExpanded);
+              }}>
+              <Ionicons name="options-outline" size={18} color={filtersExpanded ? Colors.onBrand : Colors.textMuted} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn} onPress={async () => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              if (auth.currentUser) await signOut(auth);
+              router.replace('/login');
+            }}>
+              <Ionicons name="log-out-outline" size={18} color={Colors.textMuted} />
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.headerButtons}>
-          <TouchableOpacity
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              if (!auth.currentUser) {
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                Alert.alert(
-                  'Sign In Required',
-                  'You need an account to add a bathroom. It helps us keep listings trustworthy.',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    { text: 'Sign In', onPress: () => router.push('/login') },
-                  ]
-                );
-              } else {
-                router.push('/add-bathroom');
-              }
-            }}
-            style={styles.addBtn}>
-            <Text style={styles.addBtnText}>+ Add</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={async () => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            await signOut(auth);
-            router.replace('/login');
-          }} style={styles.signOutBtn}>
-            <Text style={styles.signOutText}>Sign Out</Text>
-          </TouchableOpacity>
+        <View style={styles.locationRow}>
+          <Ionicons name="location" size={12} color={Colors.brand} />
+          <Text style={styles.locationText}>
+            {locationDenied ? 'Location off' : 'Near you'} · 5 mi radius
+          </Text>
+          {!loading && (
+            <Text style={styles.countText}>· {filtered.length} found</Text>
+          )}
         </View>
       </View>
 
-      {/* Single control row — sort + filters */}
-      <View style={styles.controlRow}>
-        {/* Sort pills */}
-        <TouchableOpacity
-          style={[styles.sortPill, sortBy === 'nearest' && styles.sortPillActive]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setSortBy('nearest');
-          }}>
-          <Text style={[styles.sortPillText, sortBy === 'nearest' && styles.sortPillTextActive]} numberOfLines={1}>
-            📍 Nearest
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.sortPill, sortBy === 'highest' && styles.sortPillActive]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setSortBy('highest');
-          }}>
-          <Text style={[styles.sortPillText, sortBy === 'highest' && styles.sortPillTextActive]} numberOfLines={1}>
-            ⭐ Top Rated
-          </Text>
-        </TouchableOpacity>
-
-        {/* Divider */}
-        <View style={styles.divider} />
-
-        {/* Filter pills — icon only */}
-        {PREVIEW_FILTERS.map(f => (
-          <TouchableOpacity
-            key={f.key}
-            style={[styles.filterPill, filters.includes(f.key) && styles.filterPillActive]}
-            onPress={() => toggleFilter(f.key)}>
-            <Text style={styles.filterPillIcon}>{f.label}</Text>
-          </TouchableOpacity>
-        ))}
-
-        {/* More button */}
-        <TouchableOpacity
-          style={[styles.filterMoreBtn, (filtersExpanded || extraActiveCount > 0) && styles.filterMoreBtnActive]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setFiltersExpanded(!filtersExpanded);
-          }}>
-          <Text style={[styles.filterMoreText, (filtersExpanded || extraActiveCount > 0) && styles.filterMoreTextActive]}>
-            {filtersExpanded ? '✕' : `⚙${extraActiveCount > 0 ? ` ${extraActiveCount}` : ''}`}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Expanded extra filters */}
+      {/* Filter panel */}
       {filtersExpanded && (
         <View style={styles.filterPanel}>
           <Text style={styles.filterPanelLabel}>FILTERS</Text>
           <View style={styles.filterPillsGrid}>
-            {FILTER_OPTIONS.map(f => (
-              <TouchableOpacity
-                key={f.key}
-                style={[styles.filterPillFull, filters.includes(f.key) && styles.filterPillActive]}
-                onPress={() => toggleFilter(f.key)}>
-                <Text style={[styles.filterPillFullText, filters.includes(f.key) && styles.filterPillTextActive]}>
-                  {f.fullLabel}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {FILTER_OPTIONS.map(f => {
+              const active = filters.includes(f.key);
+              return (
+                <TouchableOpacity
+                  key={f.key}
+                  style={[styles.filterChip, active && styles.filterChipActive]}
+                  onPress={() => toggleFilter(f.key)}>
+                  {active && <Ionicons name="checkmark" size={12} color={Colors.brand} style={{ marginRight: 4 }} />}
+                  <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
+                    {f.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
           {filters.length > 0 && (
             <TouchableOpacity onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               setFilters([]);
             }} style={styles.clearBtn}>
-              <Text style={styles.clearBtnText}>Clear all filters</Text>
+              <Text style={styles.clearBtnText}>Clear all</Text>
             </TouchableOpacity>
           )}
         </View>
       )}
 
-      {/* Skeleton or List */}
+      {/* Sort segmented control */}
+      <View style={styles.sortRow}>
+        <TouchableOpacity
+          style={[styles.sortSegment, sortBy === 'nearest' && styles.sortSegmentActive]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setSortBy('nearest');
+          }}>
+          <Text style={[styles.sortSegmentText, sortBy === 'nearest' && styles.sortSegmentTextActive]}>
+            Nearest
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.sortSegment, sortBy === 'highest' && styles.sortSegmentActive]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setSortBy('highest');
+          }}>
+          <Text style={[styles.sortSegmentText, sortBy === 'highest' && styles.sortSegmentTextActive]}>
+            Top Rated
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* List */}
       <ScrollView
         style={styles.list}
-        contentContainerStyle={{ padding: 16, gap: 12 }}
+        contentContainerStyle={{ padding: 20, gap: 12 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#0d9488"
-            colors={['#0d9488']}
+            tintColor={Colors.brand}
+            colors={[Colors.brand]}
           />
         }>
         {loading ? (
@@ -350,7 +290,7 @@ export default function HomeScreen() {
               <View style={styles.empty}>
                 <Text style={styles.emptyIcon}>🗺️</Text>
                 <Text style={styles.emptyText}>No restrooms here yet</Text>
-                <Text style={styles.emptySubtext}>You could be the first to add one in your neighborhood. Every great community starts somewhere!</Text>
+                <Text style={styles.emptySubtext}>You could be the first to add one in your neighborhood.</Text>
                 <TouchableOpacity
                   style={styles.emptyBtn}
                   onPress={() => {
@@ -361,7 +301,7 @@ export default function HomeScreen() {
                       router.push('/add-bathroom');
                     }
                   }}>
-                  <Text style={styles.emptyBtnText}>+ Add the First One</Text>
+                  <Text style={styles.emptyBtnText}>Add the First One</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -380,114 +320,222 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               </View>
             )}
-            {filtered.map(b => (
+
+            {/* Hero card — nearest result */}
+            {heroBathroom && (
               <TouchableOpacity
-                key={b.id}
-                style={styles.card}
+                activeOpacity={0.9}
+                style={styles.heroCard}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  router.push({ pathname: '/bathroom-detail', params: { bathroomId: b.id } });
-                }}
-              >
-                <View style={styles.cardTop}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.cardName}>{b.name}</Text>
-                    <Text style={styles.cardSub} numberOfLines={1}>📍 {b.distance}  ·  ✓ {formatLastVerified(b.lastCleaned)}</Text>
-                  </View>
-                  <View style={styles.scoreBox}>
-                    <Text style={[styles.score, { color: b.cleanliness === 0 ? '#888888' : getColor(b.cleanliness) }]}>
-                      {b.cleanliness === 0 ? 'New' : renderStars(b.cleanliness)}
-                    </Text>
-                    <Text style={[styles.scoreLabel, { color: b.cleanliness === 0 ? '#888888' : getColor(b.cleanliness) }]}>
-                      {b.cleanliness === 0 ? 'Not yet rated' : `${getLabel(b.cleanliness)} · ${b.reviewCount || 0} reviews`}
-                    </Text>
-                  </View>
-                  <Text style={styles.chevron}>›</Text>
-                </View>
+                  router.push({ pathname: '/bathroom-detail', params: { bathroomId: heroBathroom.id } });
+                }}>
+                <MapView
+                  style={styles.heroMap}
+                  scrollEnabled={false}
+                  zoomEnabled={false}
+                  rotateEnabled={false}
+                  pitchEnabled={false}
+                  pointerEvents="none"
+                  initialRegion={{
+                    latitude: heroBathroom.latitude,
+                    longitude: heroBathroom.longitude,
+                    latitudeDelta: 0.003,
+                    longitudeDelta: 0.003,
+                  }}
+                  customMapStyle={DARK_MAP_STYLE}>
+                  <Marker coordinate={{ latitude: heroBathroom.latitude, longitude: heroBathroom.longitude }}>
+                    <View style={[styles.heroPin, { backgroundColor: getRatingColor(heroBathroom.cleanliness) }]}>
+                      <Text style={styles.heroPinText}>
+                        {heroBathroom.cleanliness === 0 ? 'New' : heroBathroom.cleanliness.toFixed(1)}
+                      </Text>
+                    </View>
+                  </Marker>
+                </MapView>
 
-                <ScoreBar cleanliness={b.cleanliness} />
-
-                <View style={styles.badges}>
-                  {b.verified && <Text style={styles.verifiedBadge}>✓ Verified</Text>}
-                  {b.accessible && <Text style={styles.badge}>♿ Accessible</Text>}
-                  {b.genderNeutral && <Text style={styles.badge}>⚧ Neutral</Text>}
-                  {b.free && <Text style={styles.badge}>🆓 Free</Text>}
-                  {b.babyChanging && <Text style={styles.badge}>👶 Baby</Text>}
+                <View style={styles.heroBody}>
+                  <Text style={styles.heroLabel}>★ CLOSEST TO YOU</Text>
+                  <Text style={styles.heroName} numberOfLines={1}>{heroBathroom.name}</Text>
+                  <View style={styles.heroMeta}>
+                    <Text style={styles.heroMetaText} numberOfLines={1}>
+                      {heroBathroom.distance}
+                      {heroBathroom.cleanliness > 0 ? ` · ${getRatingLabel(heroBathroom.cleanliness)}` : ''}
+                    </Text>
+                    {heroBathroom.cleanliness > 0 && (
+                      <View style={[styles.heroRatingChip, { backgroundColor: getRatingColor(heroBathroom.cleanliness) + '22', borderColor: getRatingColor(heroBathroom.cleanliness) + '55' }]}>
+                        <Text style={[styles.heroRatingText, { color: getRatingColor(heroBathroom.cleanliness) }]}>
+                          {heroBathroom.cleanliness.toFixed(1)}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  <View style={styles.heroActions}>
+                    <TouchableOpacity
+                      style={styles.heroDirectionsBtn}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${heroBathroom.latitude},${heroBathroom.longitude}`);
+                      }}>
+                      <Ionicons name="navigate" size={14} color={Colors.onBrand} />
+                      <Text style={styles.heroDirectionsBtnText}>Directions</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.heroDetailsBtn}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        router.push({ pathname: '/bathroom-detail', params: { bathroomId: heroBathroom.id } });
+                      }}>
+                      <Text style={styles.heroDetailsBtnText}>Details</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </TouchableOpacity>
-            ))}
+            )}
+
+            {/* Regular list cards */}
+            {listBathrooms.map(b => {
+              const ratingColor = getRatingColor(b.cleanliness);
+              return (
+                <TouchableOpacity
+                  key={b.id}
+                  style={styles.card}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    router.push({ pathname: '/bathroom-detail', params: { bathroomId: b.id } });
+                  }}>
+                  <View style={styles.cardInner}>
+                    <View style={[styles.ratingChip, { backgroundColor: ratingColor + '22', borderColor: ratingColor + '55' }]}>
+                      <Text style={[styles.ratingChipNum, { color: ratingColor }]}>
+                        {b.cleanliness === 0 ? '—' : b.cleanliness.toFixed(1)}
+                      </Text>
+                      {b.cleanliness > 0 && <Ionicons name="star" size={9} color={ratingColor} />}
+                    </View>
+                    <View style={styles.cardCenter}>
+                      <Text style={styles.cardName} numberOfLines={1}>{b.name}</Text>
+                      <Text style={styles.cardMeta} numberOfLines={1}>
+                        {b.distance}
+                        {b.reviewCount > 0 ? ` · ${b.reviewCount} reviews` : ''}
+                      </Text>
+                      <View style={styles.amenityRow}>
+                        {b.verified && (
+                          <View style={styles.verifiedChip}>
+                            <Ionicons name="checkmark" size={10} color={Colors.brand} />
+                            <Text style={styles.verifiedChipText}>Verified</Text>
+                          </View>
+                        )}
+                        {b.accessible && <View style={styles.amenityChip}><Text style={styles.amenityChipText}>Accessible</Text></View>}
+                        {b.free && <View style={styles.amenityChip}><Text style={styles.amenityChipText}>Free</Text></View>}
+                        {b.babyChanging && <View style={styles.amenityChip}><Text style={styles.amenityChipText}>Baby</Text></View>}
+                        {b.genderNeutral && <View style={styles.amenityChip}><Text style={styles.amenityChipText}>Neutral</Text></View>}
+                      </View>
+                    </View>
+                    <Ionicons name="chevron-forward" size={16} color={Colors.textFainter} />
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </>
         )}
       </ScrollView>
+
     </View>
   );
 }
 
+const DARK_MAP_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#3b3f48' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#8a8a8a' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#242424' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#565c69' }] },
+  { featureType: 'road.local', elementType: 'geometry', stylers: [{ color: '#4d5360' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#2b3a4a' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#37492f' }] },
+  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#2f3948' }] },
+  { featureType: 'administrative', elementType: 'geometry', stylers: [{ color: '#4a4a4a' }] },
+];
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111111' },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#111111' },
-  loadingText: { marginTop: 12, fontSize: 14, color: '#888888', fontWeight: '600' },
-  header: { backgroundColor: '#1c1c1c', padding: 20, paddingTop: 60, borderBottomWidth: 1, borderBottomColor: '#2a2a2a', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  logo: { fontSize: 26, fontWeight: '800', color: '#f5ea42' },
-  subtitle: { fontSize: 13, color: '#888888', marginTop: 2 },
-  headerButtons: { flexDirection: 'row', gap: 8 },
-  addBtn: { backgroundColor: '#f5ea42', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
-  addBtnText: { fontSize: 13, fontWeight: '700', color: '#111111' },
-  signOutBtn: { backgroundColor: '#2a2a2a', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
-  signOutText: { fontSize: 13, fontWeight: '700', color: '#aaaaaa' },
-  controlRow: { backgroundColor: '#1c1c1c', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#2a2a2a', gap: 6 },
-  sortPill: { borderRadius: 99, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1.5, borderColor: '#2a2a2a', backgroundColor: '#111111', flexShrink: 1 },
-  sortPillActive: { backgroundColor: '#f5ea42', borderColor: '#f5ea42' },
-  sortPillText: { fontSize: 11, fontWeight: '700', color: '#888888' },
-  sortPillTextActive: { color: '#111111' },
-  divider: { width: 1, height: 20, backgroundColor: '#2a2a2a', marginHorizontal: 2 },
-  filterPill: { borderRadius: 99, paddingHorizontal: 9, paddingVertical: 6, borderWidth: 1.5, borderColor: '#2a2a2a', backgroundColor: '#111111' },
-  filterPillActive: { backgroundColor: '#f5ea42', borderColor: '#f5ea42' },
-  filterPillIcon: { fontSize: 13 },
-  filterMoreBtn: { borderRadius: 99, paddingHorizontal: 9, paddingVertical: 6, borderWidth: 1.5, borderColor: '#2a2a2a', backgroundColor: '#111111', marginLeft: 'auto' },
-  filterMoreBtnActive: { backgroundColor: '#f5ea42', borderColor: '#f5ea42' },
-  filterMoreText: { fontSize: 11, fontWeight: '700', color: '#888888' },
-  filterMoreTextActive: { color: '#111111' },
-  filterPanel: { backgroundColor: '#1c1c1c', borderBottomWidth: 1, borderBottomColor: '#2a2a2a', padding: 16 },
-  filterPanelLabel: { fontSize: 11, fontWeight: '800', color: '#888888', marginBottom: 10, letterSpacing: 1 },
-  filterPillsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
-  filterPillFull: { borderRadius: 99, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1.5, borderColor: '#2a2a2a', backgroundColor: '#111111' },
-  filterPillFullText: { fontSize: 12, fontWeight: '700', color: '#888888' },
-  filterPillTextActive: { color: '#111111' },
-  clearBtn: { alignSelf: 'flex-start', marginTop: 4 },
-  clearBtnText: { fontSize: 12, color: '#f43f5e', fontWeight: '700' },
+  container: { flex: 1, backgroundColor: Colors.bg },
+
+  // Header
+  header: { backgroundColor: Colors.surface, paddingTop: 56, paddingHorizontal: 20, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: Colors.border },
+  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  logo: { fontSize: 26, fontWeight: '800', color: Colors.text, letterSpacing: -0.4 },
+  logoDot: { color: Colors.brand },
+  headerIcons: { flexDirection: 'row', gap: 8 },
+  iconBtn: { width: 36, height: 36, borderRadius: 12, backgroundColor: Colors.bg, borderWidth: 1, borderColor: Colors.border, justifyContent: 'center', alignItems: 'center' },
+  iconBtnActive: { backgroundColor: Colors.brand },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  locationText: { fontSize: 12, color: Colors.textFaint, fontWeight: '500' },
+  countText: { fontSize: 12, color: Colors.textFainter, fontWeight: '500' },
+
+  // Filter panel
+  filterPanel: { backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border, paddingHorizontal: 20, paddingVertical: 14 },
+  filterPanelLabel: { fontSize: 11, fontWeight: '800', color: Colors.textFainter, marginBottom: 10, letterSpacing: 1 },
+  filterPillsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  filterChip: { flexDirection: 'row', alignItems: 'center', borderRadius: 99, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: Colors.border, backgroundColor: Colors.surfaceInput },
+  filterChipActive: { backgroundColor: Colors.brandTintBg, borderColor: Colors.brand + '66' },
+  filterChipText: { fontSize: 12, fontWeight: '600', color: Colors.textMuted },
+  filterChipTextActive: { color: Colors.brand },
+  clearBtn: { alignSelf: 'flex-start', marginTop: 10 },
+  clearBtnText: { fontSize: 12, color: Colors.textFaint, fontWeight: '600' },
+
+  // Sort segmented control
+  sortRow: { flexDirection: 'row', backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border, paddingHorizontal: 20, paddingVertical: 10, gap: 8 },
+  sortSegment: { flex: 1, borderRadius: 99, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: Colors.border, backgroundColor: Colors.surfaceInput },
+  sortSegmentActive: { backgroundColor: Colors.brand, borderColor: Colors.brand },
+  sortSegmentText: { fontSize: 13, fontWeight: '700', color: Colors.textMuted },
+  sortSegmentTextActive: { color: Colors.onBrand },
+
   list: { flex: 1 },
-  skeletonCard: { backgroundColor: '#1c1c1c', borderRadius: 16, padding: 16, borderWidth: 1.5, borderColor: '#2a2a2a' },
-  skeletonRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 },
-  skeletonTitle: { height: 16, backgroundColor: '#2a2a2a', borderRadius: 8, marginBottom: 8, width: '60%' },
-  skeletonSubtitle: { height: 12, backgroundColor: '#2a2a2a', borderRadius: 8, width: '40%' },
-  skeletonScore: { width: 44, height: 44, backgroundColor: '#2a2a2a', borderRadius: 8, marginLeft: 12 },
-  skeletonBar: { height: 6, backgroundColor: '#2a2a2a', borderRadius: 99, marginBottom: 10 },
-  skeletonBadgesRow: { flexDirection: 'row', gap: 6 },
-  skeletonBadge: { height: 22, width: 80, backgroundColor: '#2a2a2a', borderRadius: 99 },
+
+  // Skeleton
+  skeletonCard: { backgroundColor: Colors.surface, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: Colors.border },
+  skeletonRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  skeletonChip: { width: 44, height: 52, backgroundColor: Colors.border, borderRadius: 10 },
+  skeletonTitle: { height: 14, backgroundColor: Colors.border, borderRadius: 8, marginBottom: 8, width: '60%' },
+  skeletonSubtitle: { height: 11, backgroundColor: Colors.border, borderRadius: 8, width: '40%' },
+  skeletonBadgesRow: { flexDirection: 'row', gap: 6, marginLeft: 56 },
+  skeletonBadge: { height: 20, width: 64, backgroundColor: Colors.border, borderRadius: 99 },
+
+  // Empty states
   empty: { alignItems: 'center', paddingTop: 80 },
   emptyIcon: { fontSize: 56, marginBottom: 16 },
-  emptyText: { fontSize: 18, fontWeight: '700', color: '#f8fafc', marginBottom: 8 },
-  emptySubtext: { fontSize: 14, color: '#888888', marginBottom: 24, textAlign: 'center' },
-  emptyBtn: { backgroundColor: '#f5ea42', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 14 },
-  emptyBtnText: { color: '#111111', fontWeight: '700', fontSize: 15 },
-  card: { backgroundColor: '#1c1c1c', borderRadius: 16, padding: 16, borderWidth: 1.5, borderColor: '#2a2a2a' },
-  cardSelected: { borderColor: '#f5ea42' },
-  cardTop: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 },
-  cardName: { fontSize: 15, fontWeight: '700', color: '#f8fafc' },
-  cardSub: { fontSize: 12, color: '#888888', marginTop: 3 },
-  scoreBox: { alignItems: 'flex-end', marginLeft: 12 },
-  chevron: { fontSize: 20, color: '#f5ea42', marginLeft: 8, alignSelf: 'center' },
-  score: { fontSize: 16, fontWeight: '900' },
-  scoreLabel: { fontSize: 10, fontWeight: '700' },
-  barBg: { height: 6, backgroundColor: '#2a2a2a', borderRadius: 99, marginBottom: 10, overflow: 'hidden' },
-  barFill: { height: '100%', borderRadius: 99 },
-  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  verifiedBadge: { fontSize: 11, fontWeight: '700', backgroundColor: '#2a2000', color: '#f5ea42', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
-  badge: { fontSize: 11, fontWeight: '600', backgroundColor: '#1e1a00', color: '#f5ea42', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
-  detail: { marginTop: 14, flexDirection: 'row', gap: 8 },
-  btn: { flex: 1, backgroundColor: '#f5ea42', borderRadius: 10, padding: 12, alignItems: 'center' },
-  btnText: { color: '#111111', fontWeight: '700', fontSize: 13 },
-  btnOutline: { flex: 1, borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1.5, borderColor: '#2a2a2a' },
-  btnOutlineText: { color: '#aaaaaa', fontWeight: '700', fontSize: 13 },
+  emptyText: { fontSize: 18, fontWeight: '700', color: Colors.text, marginBottom: 8, letterSpacing: -0.4 },
+  emptySubtext: { fontSize: 14, color: Colors.textMuted, marginBottom: 24, textAlign: 'center' },
+  emptyBtn: { backgroundColor: Colors.brand, borderRadius: 14, paddingHorizontal: 28, paddingVertical: 14 },
+  emptyBtnText: { color: Colors.onBrand, fontWeight: '700', fontSize: 15 },
+
+  // Hero card
+  heroCard: { backgroundColor: Colors.surface, borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: Colors.border },
+  heroMap: { height: 92, width: '100%' },
+  heroBody: { padding: 16 },
+  heroLabel: { fontSize: 11, fontWeight: '800', color: Colors.brand, letterSpacing: 1, marginBottom: 4 },
+  heroName: { fontSize: 17, fontWeight: '800', color: Colors.text, letterSpacing: -0.4, marginBottom: 6 },
+  heroMeta: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
+  heroMetaText: { fontSize: 13, color: Colors.textMuted, fontWeight: '500', flex: 1 },
+  heroRatingChip: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1 },
+  heroRatingText: { fontSize: 13, fontWeight: '800' },
+  heroActions: { flexDirection: 'row', gap: 10 },
+  heroDirectionsBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: Colors.brand, borderRadius: 12, paddingVertical: 11, shadowColor: Colors.brand, shadowOpacity: 0.4, shadowRadius: 8, elevation: 4 },
+  heroDirectionsBtnText: { fontSize: 13, fontWeight: '700', color: Colors.onBrand },
+  heroDetailsBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 12, paddingVertical: 11, borderWidth: 1, borderColor: Colors.border },
+  heroDetailsBtnText: { fontSize: 13, fontWeight: '700', color: Colors.textMuted },
+  heroPin: { borderRadius: 99, paddingHorizontal: 7, paddingVertical: 4 },
+  heroPinText: { fontSize: 11, fontWeight: '800', color: Colors.onBrand },
+
+  // Regular cards
+  card: { backgroundColor: Colors.surface, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: Colors.border },
+  cardInner: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  ratingChip: { width: 44, height: 52, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center', gap: 2, flexShrink: 0 },
+  ratingChipNum: { fontSize: 15, fontWeight: '800' },
+  cardCenter: { flex: 1 },
+  cardName: { fontSize: 15, fontWeight: '700', color: Colors.text, letterSpacing: -0.2, marginBottom: 3 },
+  cardMeta: { fontSize: 12, color: Colors.textFaint, fontWeight: '500', marginBottom: 6 },
+  amenityRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5 },
+  verifiedChip: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: Colors.brandTintBg, borderRadius: 99, paddingHorizontal: 7, paddingVertical: 3 },
+  verifiedChipText: { fontSize: 10, fontWeight: '700', color: Colors.brand },
+  amenityChip: { borderRadius: 99, paddingHorizontal: 7, paddingVertical: 3, borderWidth: 1, borderColor: Colors.border },
+  amenityChipText: { fontSize: 10, fontWeight: '600', color: Colors.textFaint },
+
 });

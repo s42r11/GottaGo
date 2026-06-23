@@ -300,6 +300,8 @@ export async function fetchAndSeedNearbyBathrooms(latitude: number, longitude: n
 - "Is this bathroom still here?" confirm button on detail screen — **20 min**
 - ~~Duplicate detection when adding a bathroom~~ ✓
 - Sort toggle on detail screen reviews (newest vs highest rated) — **15 min**
+- ~~GPS pin accuracy on add bathroom~~ ✓ *(crosshair map picker with high-accuracy GPS)*
+- ~~Rate/review as part of adding a bathroom~~ ✓ *(step 3 of add flow, optional stars + comment)*
 
 ### V4 Polish:
 - ~~Pull to refresh on detail screen~~ ✓

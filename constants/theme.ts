@@ -1,53 +1,30 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-import { Platform } from 'react-native';
-
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
 export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-  },
+  bg: '#0b0b0d',
+  surface: '#161618',
+  surfaceInput: '#0b0b0d',
+  border: '#27272a',
+  borderStrong: '#3f3f46',
+  text: '#fafafa',
+  textMuted: '#a1a1aa',
+  textFaint: '#71717a',
+  textFainter: '#52525b',
+  brand: '#f5ea42',
+  brandTintBg: '#2a2410',
+  onBrand: '#0b0b0d',
 };
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
-});
+export function getRatingColor(score: number): string {
+  if (score === 0) return '#71717a';
+  if (score >= 4.0) return '#34d399';
+  if (score >= 3.0) return '#fbbf24';
+  return '#f87171';
+}
+
+export function getRatingLabel(score: number): string {
+  if (score === 0) return 'New';
+  if (score >= 4.5) return 'Spotless';
+  if (score >= 4.0) return 'Great';
+  if (score >= 3.5) return 'Decent';
+  if (score >= 3.0) return 'Decent';
+  return 'Rough';
+}

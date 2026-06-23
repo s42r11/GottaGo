@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, router } from 'expo-router';
+import { Colors } from '@/constants/theme';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -35,7 +36,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={DarkTheme}>
-      <Stack screenOptions={{ contentStyle: { backgroundColor: '#111111' } }}>
+      <Stack screenOptions={{ contentStyle: { backgroundColor: Colors.bg } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="login" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false, animation: 'fade' }} />

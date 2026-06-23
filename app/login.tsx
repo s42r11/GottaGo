@@ -16,6 +16,7 @@ import {
   View,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { Colors } from '../constants/theme';
 import { auth } from '../firebaseConfig';
 
 const isExpoGo = Constants.appOwnership === 'expo';
@@ -111,15 +112,11 @@ export default function LoginScreen() {
       style={styles.container}>
       <ScrollView contentContainerStyle={styles.inner} keyboardShouldPersistTaps="handled">
 
-        {/* Gradient background layers */}
-        <View style={styles.gradientTop} />
-        <View style={styles.gradientBottom} />
-
-        {/* Hero area */}
+        {/* Hero */}
         <View style={styles.hero}>
           <Image
             source={require('../assets/images/GottaGo_logo_cropped.png')}
-            style={styles.heroIcon}
+            style={styles.heroLogo}
             resizeMode="contain"
           />
           <Text style={styles.tagline}>When nature calls, we answer 🌟</Text>
@@ -127,45 +124,52 @@ export default function LoginScreen() {
 
         {/* Auth card */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>{isSignUp ? 'Create Account' : 'Welcome Back!'}</Text>
+          <Text style={styles.cardTitle}>{isSignUp ? 'Create Account' : 'Sign In'}</Text>
           <Text style={styles.cardSubtitle}>
-            {isSignUp ? 'Join the community 🚽' : 'Sign in to continue 🚽'}
+            {isSignUp ? 'Join the community' : 'Good to have you here'}
           </Text>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Email address"
-            placeholderTextColor="#94a3b8"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor="#94a3b8"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>EMAIL</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="you@example.com"
+              placeholderTextColor={Colors.textFainter}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>PASSWORD</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="••••••••"
+              placeholderTextColor={Colors.textFainter}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+          </View>
 
           {error && (
             <View style={styles.errorBox}>
-              <Text style={styles.errorText}>⚠️ {error}</Text>
+              <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
 
           <TouchableOpacity
-            style={styles.btn}
+            style={styles.signInBtn}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               handleAuth();
             }}
             disabled={loading}>
             {loading
-              ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.btnText}>{isSignUp ? '🎉 Create Account' : '🚀 Sign In'}</Text>
+              ? <ActivityIndicator color={Colors.onBrand} />
+              : <Text style={styles.signInBtnText}>{isSignUp ? 'Create Account' : 'Sign In'}</Text>
             }
           </TouchableOpacity>
 
@@ -196,10 +200,8 @@ export default function LoginScreen() {
                 handleGoogleSignIn();
               }}
               disabled={loading}>
-              <View style={styles.googleBtnInner}>
-                <GoogleGLogo size={22} />
-                <Text style={styles.googleBtnText}>Continue with Google</Text>
-              </View>
+              <GoogleGLogo size={20} />
+              <Text style={styles.googleBtnText}>Continue with Google</Text>
             </TouchableOpacity>
           )}
 
@@ -209,7 +211,7 @@ export default function LoginScreen() {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.replace('/(tabs)');
             }}>
-            <Text style={styles.guestText}>👀 Browse without account</Text>
+            <Text style={styles.guestText}>Browse without account</Text>
           </TouchableOpacity>
         </View>
 
@@ -221,94 +223,97 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111111' },
-  inner: { flexGrow: 1, position: 'relative' },
-  gradientTop: {
-    position: 'absolute', top: 0, left: 0, right: 0, height: 400,
-    backgroundColor: '#111111',
-  },
-  gradientBottom: {
-    position: 'absolute', bottom: 0, left: 0, right: 0, height: 500,
-    backgroundColor: '#f5ea42',
-    borderTopLeftRadius: 999,
-    borderTopRightRadius: 999,
-    opacity: 0.15,
-  },
-  hero: { alignItems: 'center', paddingTop: '25%', paddingBottom: 120, zIndex: 1 },
-  heroIcon: { width: 300, height: 120, marginBottom: 16 },
-  appName: { fontSize: 42, fontWeight: '900', color: '#f5ea42', letterSpacing: 2, marginBottom: 8 },
-  tagline: { fontSize: 15, color: '#aaaaaa', fontWeight: '500', textAlign: 'center' },
+  container: { flex: 1, backgroundColor: Colors.bg },
+  inner: { flexGrow: 1, justifyContent: 'space-between' },
+
+  // Hero
+  hero: { alignItems: 'center', paddingTop: '20%', paddingBottom: 32 },
+  heroLogo: { width: 260, height: 100, marginBottom: 12 },
+  tagline: { fontSize: 14, color: Colors.textFaint, fontWeight: '500' },
+
+  // Card
   card: {
-    backgroundColor: '#1c1c1c',
-    borderRadius: 28,
-    padding: 28,
+    backgroundColor: Colors.surface,
+    borderRadius: 26,
+    padding: 24,
     marginHorizontal: 20,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#2a2a2a',
-    zIndex: 1,
+    borderColor: Colors.border,
     shadowColor: '#000',
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.4,
     shadowRadius: 20,
     elevation: 10,
   },
-  cardTitle: { fontSize: 24, fontWeight: '800', color: '#f8fafc', marginBottom: 4 },
-  cardSubtitle: { fontSize: 14, color: '#888888', marginBottom: 24, fontWeight: '500' },
+  cardTitle: { fontSize: 22, fontWeight: '800', color: Colors.text, letterSpacing: -0.4, marginBottom: 4 },
+  cardSubtitle: { fontSize: 14, color: Colors.textMuted, marginBottom: 20, fontWeight: '500' },
+
+  // Inputs
+  inputGroup: { marginBottom: 12 },
+  inputLabel: { fontSize: 10.5, fontWeight: '800', color: Colors.textFainter, letterSpacing: 1, marginBottom: 6 },
   input: {
-    backgroundColor: '#111111',
-    borderWidth: 1.5,
-    borderColor: '#2a2a2a',
-    borderRadius: 14,
-    padding: 14,
+    backgroundColor: Colors.surfaceInput,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    padding: 13,
     fontSize: 15,
-    color: '#f8fafc',
-    marginBottom: 12,
+    color: Colors.text,
   },
+
+  // Error
   errorBox: { backgroundColor: '#450a0a', borderRadius: 10, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#7f1d1d' },
   errorText: { color: '#fca5a5', fontSize: 13, fontWeight: '600' },
-  btn: {
-    backgroundColor: '#f5ea42',
-    borderRadius: 14,
-    padding: 16,
+
+  // Sign in button
+  signInBtn: {
+    backgroundColor: Colors.brand,
+    borderRadius: 13,
+    padding: 15,
     alignItems: 'center',
-    marginBottom: 12,
-    shadowColor: '#f5ea42',
-    shadowOpacity: 0.3,
+    marginBottom: 14,
+    marginTop: 4,
+    shadowColor: Colors.brand,
+    shadowOpacity: 0.4,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 5,
   },
-  btnText: { color: '#111111', fontWeight: '800', fontSize: 16 },
+  signInBtnText: { color: Colors.onBrand, fontWeight: '800', fontSize: 15 },
+
+  // Toggle sign in / sign up
   switchBtn: { alignItems: 'center', marginBottom: 20 },
-  switchText: { fontSize: 14, color: '#888888', fontWeight: '500' },
-  switchHighlight: { color: '#f5ea42', fontWeight: '700' },
-  divider: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: '#2a2a2a' },
-  dividerText: { color: '#555555', fontSize: 13, paddingHorizontal: 12, fontWeight: '600' },
+  switchText: { fontSize: 13, color: Colors.textMuted, fontWeight: '500' },
+  switchHighlight: { color: Colors.brand, fontWeight: '700' },
+
+  // Divider
+  divider: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: Colors.border },
+  dividerText: { color: Colors.textFainter, fontSize: 12, paddingHorizontal: 12, fontWeight: '600' },
+
+  // Google button — official dark variant, never yellow
   googleBtn: {
-    backgroundColor: '#111111',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 12,
-    borderWidth: 1.5,
-    borderColor: '#f5ea42',
-    shadowColor: '#f5ea42',
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  googleBtnInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 10,
+    backgroundColor: '#131314',
+    borderRadius: 13,
+    padding: 13,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#5f6368',
   },
-  googleBtnText: { color: '#f5ea42', fontWeight: '700', fontSize: 15, marginLeft: 10 },
+  googleBtnText: { color: '#e3e3e3', fontWeight: '600', fontSize: 14 },
+
+  // Browse without account
   guestBtn: {
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 13,
+    padding: 13,
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#2a2a2a',
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
-  guestText: { color: '#888888', fontWeight: '700', fontSize: 14 },
-  footer: { textAlign: 'center', fontSize: 11, color: '#555555', paddingBottom: 32, zIndex: 1 },
+  guestText: { color: Colors.textMuted, fontWeight: '600', fontSize: 14 },
+
+  footer: { textAlign: 'center', fontSize: 11, color: Colors.textFainter, paddingBottom: 32 },
 });
